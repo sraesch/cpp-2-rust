@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 log = "0.4"
 thiserror = "2.0"
+ai = { git = "https://github.com/sraesch/rs-ai.git", tag = "v0.1.0" }
+url = "2.2"
+schemars = { version = "1.0.4", features = ["derive"] }

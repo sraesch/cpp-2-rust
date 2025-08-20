@@ -1,4 +1,5 @@
 use thiserror::Error;
+use ai::Error as LLMError;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -7,6 +8,12 @@ pub enum Error {
 
     #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("URL error: {0}")]
+    Url(#[from] url::ParseError),
+
+    #[error("LLM error: {0}")]
+    LLM(#[from] LLMError),
 }
 
 /// The result type used in this crate.

@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::Parser as _;
 use log::{LevelFilter, error, info};
 use options::Options;
+use dotenv::dotenv;
 use std::io::Write as _;
 
 /// Parses the program arguments and returns None, if no arguments were provided and Some otherwise.
@@ -34,19 +35,45 @@ fn initialize_logging(filter: LevelFilter) {
 }
 
 /// Runs the program.
-fn run_program() -> Result<()> {
+async fn run_program() -> Result<()> {
     let options = parse_args()?;
     initialize_logging(LevelFilter::from(options.log_level));
 
-    options.dump_to_log();
+    // Get the environment variable API_KEY
+    info!("Load API_KEY...");
 
-    info!("Do something useful here...");
+    if let Err(err) = dotenv() {
+        anyhow::bail!("Failed to load .env file: {}", err);
+    }
+
+    let api_key = match std::env::var("API_KEY") {
+        Ok(api_key) => api_key,
+        Err(err) => {
+            anyhow::bail!("Failed to get API_KEY: {}", err);
+        }
+    };
+
+    info!("Load API_KEY...Ok");
+
+    info!("Options:");
+    options.dump_to_log();
+    info!("-------");
+
+    match options.command {
+        options::Commands::Project(args) => {
+            info!("Running command: Project");
+            let cpp_options: cpp2rust::cpp::Options = args.into();
+            let project = cpp2rust::cpp::build_cpp_project(cpp_options).await?;
+            info!("Parsed C++ project: {:?}", project);
+        }
+    }
 
     Ok(())
 }
 
-fn main() {
-    match run_program() {
+#[tokio::main]
+async fn main() {
+    match run_program().await {
         Ok(()) => {
             info!("SUCCESS");
         }
