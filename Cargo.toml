@@ -1,0 +1,8 @@
+[workspace]
+
+members = ["cpp2rust", "cpp2rust-cli"]
+resolver = "3"
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true
