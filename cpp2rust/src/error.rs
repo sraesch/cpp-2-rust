@@ -14,6 +14,12 @@ pub enum Error {
 
     #[error("LLM error: {0}")]
     LLM(#[from] LLMError),
+
+    #[error("Not a directory: {0}")]
+    NotADirectory(std::path::PathBuf),
+
+    #[error("No CMakeLists.txt found")]
+    NoCMakeListsFound,
 }
 
 /// The result type used in this crate.

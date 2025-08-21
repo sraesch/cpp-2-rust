@@ -1,3 +1,5 @@
+mod cmake_files;
+
 use std::path::PathBuf;
 
 use log::{error, info};
@@ -6,6 +8,8 @@ use url::Url;
 use crate::{cpp::CppProject, llm::LLMOptions, Error};
 
 use ai::Client as LLMClient;
+
+pub use cmake_files::{find_cmake_list_files, Folder};
 
 /// The options for parsing the CPP project structure.
 pub struct Options {
