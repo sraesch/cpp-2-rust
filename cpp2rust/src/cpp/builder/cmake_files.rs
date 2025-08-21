@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use log::{error, info};
+use log::{error, info, trace};
 
 use crate::Error;
 
@@ -88,7 +88,7 @@ fn recursively_find_cmake_lists(folder: &Path) -> Result<Option<Folder>, Error> 
     
     // check for case where we neither have a CMakeLists.txt nor in any of the sub-folders
     if !has_cmake_lists && sub_folders.is_empty() {
-        info!("Exclude {:?} as there are no CMakeLists.txt files", folder);
+        trace!("Exclude {:?} as there are no CMakeLists.txt files", folder);
         return Ok(None);
     }
 

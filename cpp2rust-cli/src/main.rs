@@ -46,13 +46,6 @@ async fn run_program() -> Result<()> {
         anyhow::bail!("Failed to load .env file: {}", err);
     }
 
-    let api_key = match std::env::var("API_KEY") {
-        Ok(api_key) => api_key,
-        Err(err) => {
-            anyhow::bail!("Failed to get API_KEY: {}", err);
-        }
-    };
-
     info!("Load API_KEY...Ok");
 
     info!("Options:");

@@ -2,7 +2,7 @@ mod cmake_files;
 
 use std::path::PathBuf;
 
-use log::{error, info};
+use log::{debug, error, info};
 use url::Url;
 
 use crate::{cpp::CppProject, llm::LLMOptions, Error};
@@ -40,6 +40,7 @@ pub async fn build_cpp_project(options: Options) -> Result<CppProject, Error> {
 /// The internal builder object to build the cpp project.
 struct Builder {
     llm_client: LLMClient,
+    options: Options,
 }
 
 impl Builder {
@@ -61,15 +62,41 @@ impl Builder {
                     Error::LLM(e)
                 }
             )?;
-        
-        Ok(Self { llm_client })
+
+        Ok(Self { llm_client, options })
     }
 
     /// Builds the C++ project.
     pub async fn build(self) -> Result<CppProject, Error> {
         info!("Building C++ project...");
 
+        info!("Start collecting CMakeLists.txt...");
+        let root_folder = find_cmake_list_files(&self.options.root_directory).map_err(|e|{
+            error!("Failed to find CMakeLists.txt files: {}", e);
+            e
+        })?;
+
+        if log::log_enabled!(log::Level::Debug) {
+            info!("Dumping folder structure to debug log...");
+            Self::dump_folder_structure_to_debug_log(&root_folder, 0);
+        }
 
         todo!("Implement the logic to build the C++ project using the LLM client and other necessary components.");
+    }
+
+    /// Dumps the folder structure to the debug log.
+    /// 
+    /// # Arguments
+    /// * `root_folder` - The root folder to dump.
+    /// * `indent` - The current indentation level.
+    fn dump_folder_structure_to_debug_log(root_folder: &Folder, indent: usize) {
+        let indent_str = " ".repeat(indent);
+        debug!("{}Folder: {}", indent_str, root_folder.name);
+        if root_folder.has_cmake_lists {
+            debug!("{}  CMakeLists.txt found", indent_str);
+        }
+        for sub_folder in &root_folder.sub_folders {
+            Self::dump_folder_structure_to_debug_log(sub_folder, indent + 2);
+        }
     }
 }
