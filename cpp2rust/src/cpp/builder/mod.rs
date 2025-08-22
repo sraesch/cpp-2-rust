@@ -5,11 +5,11 @@ use std::path::PathBuf;
 use log::{debug, error, info};
 use url::Url;
 
-use crate::{cpp::CppProject, llm::LLMOptions, Error};
+use crate::{Error, cpp::CppProject, llm::LLMOptions};
 
 use ai::Client as LLMClient;
 
-pub use cmake_files::{find_cmake_list_files, Folder};
+pub use cmake_files::{CMakeFileType, CMakeFiles, find_cmake_project_files};
 
 /// The options for parsing the CPP project structure.
 pub struct Options {
@@ -21,13 +21,16 @@ pub struct Options {
 }
 
 /// Builds the C++ project from the given source.
-/// 
+///
 /// # Arguments
 /// * `options` - The options to configure the builder.
 pub async fn build_cpp_project(options: Options) -> Result<CppProject, Error> {
     // Here you would implement the logic to build the C++ project based on the provided options.
     // This is a placeholder implementation.
-    info!("Parsing C++ project from directory: {:?}", options.root_directory);
+    info!(
+        "Parsing C++ project from directory: {:?}",
+        options.root_directory
+    );
     info!("Using LLM model: {}", options.llm.model);
 
     info!("Creating Builder instance...");
@@ -55,48 +58,77 @@ impl Builder {
             Error::Url(e)
         })?;
 
-        let llm_client = LLMClient::new(options.llm.api_key.clone(), llm_endpoint)
-            .map_err(
-                |e| {
-                    error!("Failed to create LLM client: {}", e);
-                    Error::LLM(e)
-                }
-            )?;
+        let llm_client =
+            LLMClient::new(options.llm.api_key.clone(), llm_endpoint).map_err(|e| {
+                error!("Failed to create LLM client: {}", e);
+                Error::LLM(e)
+            })?;
 
-        Ok(Self { llm_client, options })
+        Ok(Self {
+            llm_client,
+            options,
+        })
     }
 
     /// Builds the C++ project.
     pub async fn build(self) -> Result<CppProject, Error> {
         info!("Building C++ project...");
 
+        self.parse_cmake_project_files().await.map_err(|err| {
+            error!("Failed to parse CMake project files: {}", err);
+            err
+        })?;
+
+        todo!(
+            "Implement the logic to build the C++ project using the LLM client and other necessary components."
+        );
+    }
+
+    /// Parses the CMake project files in the given directory.
+    async fn parse_cmake_project_files(&self) -> Result<CMakeFiles, Error> {
+        let root_path = self.options.root_directory.as_path();
+
+        // Here you would implement the logic to parse the CMake project files.
+        // This is a placeholder implementation.
+        info!("Parsing CMake project files in directory: {:?}", root_path);
+
         info!("Start collecting CMakeLists.txt...");
-        let root_folder = find_cmake_list_files(&self.options.root_directory).map_err(|e|{
+        let cmake_files = find_cmake_project_files(&self.options.root_directory).map_err(|e| {
             error!("Failed to find CMakeLists.txt files: {}", e);
             e
         })?;
+        info!("Found {} CMakeLists.txt files", cmake_files.len());
 
         if log::log_enabled!(log::Level::Debug) {
             info!("Dumping folder structure to debug log...");
-            Self::dump_folder_structure_to_debug_log(&root_folder, 0);
+            Self::dump_folder_structure_to_debug_log(&cmake_files);
         }
 
-        todo!("Implement the logic to build the C++ project using the LLM client and other necessary components.");
+        Ok(cmake_files)
     }
 
-    /// Dumps the folder structure to the debug log.
-    /// 
+    /// Dumps the cmake files to the debug log.
+    ///
     /// # Arguments
-    /// * `root_folder` - The root folder to dump.
-    /// * `indent` - The current indentation level.
-    fn dump_folder_structure_to_debug_log(root_folder: &Folder, indent: usize) {
-        let indent_str = " ".repeat(indent);
-        debug!("{}Folder: {}", indent_str, root_folder.name);
-        if root_folder.has_cmake_lists {
-            debug!("{}  CMakeLists.txt found", indent_str);
-        }
-        for sub_folder in &root_folder.sub_folders {
-            Self::dump_folder_structure_to_debug_log(sub_folder, indent + 2);
+    /// * `cmake_files` - The list of cmake files to dump.
+    fn dump_folder_structure_to_debug_log(cmake_files: &CMakeFiles) {
+        for (id, cmake_file) in cmake_files {
+            debug!(
+                "CMake file (id={}): {}",
+                id,
+                cmake_file.relative_path.display()
+            );
+            for reference in &cmake_file.references {
+                if let Some(ref_file) = cmake_files.get(reference) {
+                    debug!(
+                        "  -> Reference to CMake file (id={}): {}",
+                        reference,
+                        ref_file.relative_path.display()
+                    );
+                } else {
+                    debug!("  -> Reference to unknown CMake file (id={})", reference);
+                }
+            }
         }
     }
 }
