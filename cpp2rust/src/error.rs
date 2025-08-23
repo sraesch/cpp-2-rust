@@ -1,5 +1,5 @@
-use thiserror::Error;
 use ai::Error as LLMError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -20,7 +20,16 @@ pub enum Error {
 
     #[error("No CMakeLists.txt found")]
     NoCMakeListsFound,
+
+    #[error("CMake files are not valid UTF-8: {0}")]
+    CMakeNotUtf8(#[from] std::string::FromUtf8Error),
 }
 
 /// The result type used in this crate.
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::IO(Box::new(err))
+    }
+}

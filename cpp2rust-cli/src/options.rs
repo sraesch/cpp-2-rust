@@ -34,6 +34,10 @@ pub struct Options {
     #[arg(short, value_enum, long, default_value_t = LogLevel::Info)]
     pub log_level: LogLevel,
 
+    /// The output directory for the generated files
+    #[arg(short, long)]
+    pub output_directory: PathBuf,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -43,7 +47,6 @@ pub enum Commands {
     /// Parses the C++ project files and dumps out the JSON representation
     Project(ProjectArguments),
 }
-
 
 #[derive(Args, Debug, Clone)]
 pub struct ProjectArguments {
@@ -60,21 +63,32 @@ pub struct ProjectArguments {
     pub root_directory: PathBuf,
 }
 
-
 impl Options {
     /// Dumps the options to the log.
     pub fn dump_to_log(&self) {
         info!("log_level: {:?}", self.log_level);
+        info!("output_directory: {:?}", self.output_directory);
+        match self.command {
+            Commands::Project(ref args) => {
+                info!("command: Project");
+                info!("  model: {}", args.model);
+                info!("  api_endpoint: {}", args.api_endpoint);
+                info!("  root_directory: {:?}", args.root_directory);
+            }
+        }
     }
 }
 
-impl From<ProjectArguments> for cpp2rust::cpp::Options {
-    fn from(args: ProjectArguments) -> Self {
+impl From<Options> for cpp2rust::cpp::Options {
+    fn from(args: Options) -> Self {
+        let Commands::Project(ref project_args) = args.command;
+
         cpp2rust::cpp::Options {
-            root_directory: args.root_directory,
+            root_directory: project_args.root_directory.clone(),
+            output_directory: args.output_directory.clone(),
             llm: cpp2rust::llm::LLMOptions {
-                model: args.model,
-                endpoint: args.api_endpoint,
+                model: project_args.model.clone(),
+                endpoint: project_args.api_endpoint.clone(),
                 api_key: std::env::var("API_KEY").unwrap_or_default(),
             },
         }

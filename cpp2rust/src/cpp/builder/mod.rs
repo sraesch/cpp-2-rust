@@ -1,8 +1,11 @@
 mod cmake_files;
 
-use std::path::PathBuf;
+use std::{
+    io::{BufWriter, Write},
+    path::{Path, PathBuf},
+};
 
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use url::Url;
 
 use crate::{Error, cpp::CppProject, llm::LLMOptions};
@@ -15,6 +18,9 @@ pub use cmake_files::{CMakeFileType, CMakeFiles, find_cmake_project_files};
 pub struct Options {
     /// The root directory for the project.
     pub root_directory: PathBuf,
+
+    /// The output directory for the generated files.
+    pub output_directory: PathBuf,
 
     /// The options for the LLM to be used to collect all relevant information.
     pub llm: LLMOptions,
@@ -74,18 +80,6 @@ impl Builder {
     pub async fn build(self) -> Result<CppProject, Error> {
         info!("Building C++ project...");
 
-        self.parse_cmake_project_files().await.map_err(|err| {
-            error!("Failed to parse CMake project files: {}", err);
-            err
-        })?;
-
-        todo!(
-            "Implement the logic to build the C++ project using the LLM client and other necessary components."
-        );
-    }
-
-    /// Parses the CMake project files in the given directory.
-    async fn parse_cmake_project_files(&self) -> Result<CMakeFiles, Error> {
         let root_path = self.options.root_directory.as_path();
 
         // Here you would implement the logic to parse the CMake project files.
@@ -98,13 +92,118 @@ impl Builder {
             e
         })?;
         info!("Found {} CMakeLists.txt files", cmake_files.len());
+        self.write_cmake_files(&cmake_files)?;
 
         if log::log_enabled!(log::Level::Debug) {
             info!("Dumping folder structure to debug log...");
             Self::dump_folder_structure_to_debug_log(&cmake_files);
         }
 
-        Ok(cmake_files)
+        info!("Analyzing CMake files...");
+        self.analyze_cmake_files(&cmake_files).await?;
+        info!("Analyzing CMake files...DONE");
+
+        todo!(
+            "Implement the logic to build the C++ project using the LLM client and other necessary components."
+        );
+    }
+
+    /// Writes the given list of cmake files into the output directory.
+    /// Is used for logging and debugging.
+    ///
+    /// # Arguments
+    /// * `cmake_files`: The list of CMake files to write.
+    fn write_cmake_files(&self, cmake_files: &CMakeFiles) -> Result<(), Error> {
+        let p = self.options.output_directory.join("cmake_files.txt");
+        let file = std::fs::File::create(&p).map_err(|e| {
+            error!("Failed to create file {:?}: {}", p, e);
+            Error::IO(Box::new(e))
+        })?;
+
+        let mut writer = BufWriter::new(file);
+        for cmake_file in cmake_files {
+            writeln!(writer, "{}", cmake_file.display()).map_err(|e| {
+                error!("Failed to write CMake file {}: {}", cmake_file.display(), e);
+                Error::IO(Box::new(e))
+            })?;
+        }
+
+        Ok(())
+    }
+
+    /// Analyzes the given CMake files.
+    ///
+    /// # Arguments
+    /// - `cmake_files`: The list of CMake files to analyze.
+    async fn analyze_cmake_files(&self, cmake_files: &CMakeFiles) -> Result<(), Error> {
+        let prompt_str = Self::create_prompt(&self.options.root_directory, cmake_files)?;
+        trace!("LLM Prompt:\n{}", prompt_str);
+        self.write_cmake_prompt_to_file(&prompt_str)?;
+
+        // self.llm_client.chat_completion(parameter)
+        Ok(())
+    }
+
+    /// Creates a prompt for a LLM to generate classify the cmake files and analyze their mutual dependencies.
+    /// Return the prompt as a String.
+    ///
+    /// # Arguments
+    /// - `root_path`: The root path of the CMake project.
+    /// - `cmake_files`: The list of CMake files to analyze.
+    fn create_prompt(root_path: &Path, cmake_files: &CMakeFiles) -> Result<String, Error> {
+        let mut writer = BufWriter::new(Vec::new());
+
+        // first write the task part of the prompt
+        writeln!(
+            writer,
+            "Task: Analyze the following CMake files and identify for each, what is the purpose of the file and references to other cmake files:\n"
+        )?;
+
+        for cmake_file in cmake_files {
+            let cmake_file_path = root_path.join(cmake_file);
+            // try to open the file and read its contents
+            match std::fs::read_to_string(cmake_file_path) {
+                Ok(contents) => {
+                    writeln!(writer, "--- FILE: {} ---", cmake_file.display())?;
+                    writeln!(writer, "{}", contents)?;
+                    writeln!(writer, "--- END FILE: {} ---\n", cmake_file.display())?;
+                }
+                Err(e) => {
+                    error!("Failed to read CMake file {}: {}", cmake_file.display(), e);
+                    continue;
+                }
+            }
+        }
+
+        writer.flush()?;
+
+        let buffer: Vec<u8> = writer.into_inner().unwrap();
+        let prompt = String::from_utf8(buffer).map_err(|e| {
+            error!("Failed to convert prompt to String: {}", e);
+            Error::CMakeNotUtf8(e)
+        })?;
+
+        Ok(prompt)
+    }
+
+    /// Writes the CMake prompt to a file.
+    ///
+    /// # Arguments
+    /// * `prompt`: The CMake prompt to write.
+    fn write_cmake_prompt_to_file(&self, prompt: &str) -> Result<(), Error> {
+        let p = self.options.output_directory.join("cmake_prompt.txt");
+        let file = std::fs::File::create(&p).map_err(|e| {
+            error!("Failed to create file {:?}: {}", p, e);
+            Error::IO(Box::new(e))
+        })?;
+
+        let mut writer = BufWriter::new(file);
+        writeln!(writer, "{}", prompt).map_err(|e| {
+            error!("Failed to write prompt to file {:?}: {}", p, e);
+            Error::IO(Box::new(e))
+        })?;
+
+        Ok(())
     }
 
     /// Dumps the cmake files to the debug log.

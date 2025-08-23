@@ -2,9 +2,9 @@ mod options;
 
 use anyhow::Result;
 use clap::Parser as _;
+use dotenv::dotenv;
 use log::{LevelFilter, error, info};
 use options::Options;
-use dotenv::dotenv;
 use std::io::Write as _;
 
 /// Parses the program arguments and returns None, if no arguments were provided and Some otherwise.
@@ -52,10 +52,13 @@ async fn run_program() -> Result<()> {
     options.dump_to_log();
     info!("-------");
 
+    // make sure the output directory exists
+    std::fs::create_dir_all(&options.output_directory)?;
+
     match options.command {
-        options::Commands::Project(args) => {
+        options::Commands::Project(_) => {
             info!("Running command: Project");
-            let cpp_options: cpp2rust::cpp::Options = args.into();
+            let cpp_options: cpp2rust::cpp::Options = options.into();
             let project = cpp2rust::cpp::build_cpp_project(cpp_options).await?;
             info!("Parsed C++ project: {:?}", project);
         }
