@@ -1,31 +1,28 @@
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use log::{error, info};
 
 use crate::{Error, utils::make_absolute};
 
 /// The list of found CMake files.
-pub type CMakeFiles = BTreeMap<u32, CMakeFile>;
+pub type CMakeFiles = Vec<PathBuf>;
 
-/// A single cmake file.
-#[derive(Debug, Clone)]
-pub struct CMakeFile {
-    /// The unique identifier for the cmake file.
-    /// The root folder always has id 0.
-    pub id: u32,
+// /// A single cmake file.
+// #[derive(Debug, Clone)]
+// pub struct CMakeFile {
+//     /// The unique identifier for the cmake file.
+//     /// The root folder always has id 0.
+//     pub id: u32,
 
-    /// The relative path to the cmake file.
-    pub relative_path: PathBuf,
+//     /// The relative path to the cmake file.
+//     pub relative_path: PathBuf,
 
-    /// The type of the cmake file.
-    pub cmake_file_type: CMakeFileType,
+//     /// The type of the cmake file.
+//     pub cmake_file_type: CMakeFileType,
 
-    /// References to other cmake files defined by their id.
-    pub references: Vec<u32>,
-}
+//     /// References to other cmake files defined by their id.
+//     pub references: Vec<u32>,
+// }
 
 /// The type of a cmake file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -65,6 +62,9 @@ pub fn find_cmake_project_files(root_folder: &Path) -> Result<CMakeFiles, Error>
             e
         },
     )?;
+
+    // sort by path lengths, i.e. how many directories deep the file is
+    cmake_files.sort_by_key(|path| path.components().count());
 
     info!(
         "Found {} cmake files in {:?}",
@@ -113,7 +113,7 @@ fn recursively_find_cmake_project_files(
             {
                 error!("Failed to find cmake files in {:?}: {}", path, err);
             }
-        } else if let Some(cmake_file_type) = is_cmake_file(&path) {
+        } else if is_cmake_file(&path).is_some() {
             // Found a cmake file, add it to the cmake_files collection
             let relative_path = match path.strip_prefix(project_root) {
                 Ok(relative_path) => relative_path,
@@ -125,16 +125,7 @@ fn recursively_find_cmake_project_files(
                     return Ok(()); // DO NOT RETURN, BUT RATHER CONTINUE
                 }
             };
-            let id = cmake_files.len() as u32;
-            cmake_files.insert(
-                id,
-                CMakeFile {
-                    id,
-                    relative_path: relative_path.to_path_buf(),
-                    cmake_file_type,
-                    references: Vec::new(),
-                },
-            );
+            cmake_files.push(relative_path.to_path_buf());
         }
     }
     Ok(())

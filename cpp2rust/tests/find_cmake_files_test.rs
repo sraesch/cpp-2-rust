@@ -2,7 +2,7 @@
 mod test {
     use std::path::Path;
 
-    use cpp2rust::cpp::{CMakeFileType, find_cmake_project_files};
+    use cpp2rust::cpp::find_cmake_project_files;
 
     #[test]
     fn test_finding_cmake_files() {
@@ -12,19 +12,24 @@ mod test {
         let cmake_files = result.unwrap();
         assert_eq!(cmake_files.len(), 3);
 
-        assert_eq!(cmake_files[&0].id, 0);
-        assert_eq!(cmake_files[&0].relative_path, Path::new("CMakeLists.txt"));
-        assert_eq!(cmake_files[&0].cmake_file_type, CMakeFileType::CMakeLists);
+        println!("{:?}", cmake_files);
 
-        assert_eq!(cmake_files[&1].id, 1);
-        assert_eq!(cmake_files[&1].relative_path, Path::new("a/CMakeLists.txt"));
-        assert_eq!(cmake_files[&1].cmake_file_type, CMakeFileType::CMakeLists);
-
-        assert_eq!(cmake_files[&2].id, 2);
         assert_eq!(
-            cmake_files[&2].relative_path,
-            Path::new("c/d/CMakeLists.txt")
+            cmake_files[0],
+            Path::new("CMakeLists.txt"),
+            "id=0, CMakeLists.txt not found"
         );
-        assert_eq!(cmake_files[&2].cmake_file_type, CMakeFileType::CMakeLists);
+
+        assert_eq!(
+            cmake_files[1],
+            Path::new("a/CMakeLists.txt"),
+            "id=1, a/CMakeLists.txt not found"
+        );
+
+        assert_eq!(
+            cmake_files[2],
+            Path::new("c/d/CMakeLists.txt"),
+            "id=2, c/d/CMakeLists.txt not found"
+        );
     }
 }

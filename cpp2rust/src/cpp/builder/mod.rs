@@ -112,23 +112,8 @@ impl Builder {
     /// # Arguments
     /// * `cmake_files` - The list of cmake files to dump.
     fn dump_folder_structure_to_debug_log(cmake_files: &CMakeFiles) {
-        for (id, cmake_file) in cmake_files {
-            debug!(
-                "CMake file (id={}): {}",
-                id,
-                cmake_file.relative_path.display()
-            );
-            for reference in &cmake_file.references {
-                if let Some(ref_file) = cmake_files.get(reference) {
-                    debug!(
-                        "  -> Reference to CMake file (id={}): {}",
-                        reference,
-                        ref_file.relative_path.display()
-                    );
-                } else {
-                    debug!("  -> Reference to unknown CMake file (id={})", reference);
-                }
-            }
+        for (id, cmake_file) in cmake_files.iter().enumerate() {
+            debug!("CMake file (id={}): {}", id, cmake_file.display());
         }
     }
 }
