@@ -80,8 +80,6 @@ pub fn find_cmake_project_files(root_folder: &Path) -> Result<CMakeFiles, Error>
 }
 
 /// Recursively traverses over the folder structure to find all cmake files.
-/// Returns the folder with the respective sub-folder or none, if not a single CMakeLists.txt is found
-/// in the overall subtree.
 ///
 /// # Arguments
 /// * `project_root` - The path to the project root folder.
@@ -113,56 +111,90 @@ fn recursively_find_cmake_project_files(
         if path.is_dir() {
             if let Err(err) = recursively_find_cmake_project_files(project_root, &path, cmake_files)
             {
-                error!("Failed to find CMakeLists.txt in {:?}: {}", path, err);
+                error!("Failed to find cmake files in {:?}: {}", path, err);
             }
-        } else if path.is_file() {
-            if let Some(file_name) = path.file_name().and_then(|s| s.to_str()) {
-                if file_name == "CMakeLists.txt" {
-                    // Found a CMakeLists.txt file, add it to the cmake_files collection
-                    let relative_path = match path.strip_prefix(project_root) {
-                        Ok(relative_path) => relative_path,
-                        Err(err) => {
-                            error!(
-                                "Failed to strip prefix {:?} from {:?}: {}",
-                                project_root, path, err
-                            );
-                            return Ok(());
-                        }
-                    };
-                    let id = cmake_files.len() as u32;
-                    cmake_files.insert(
-                        id,
-                        CMakeFile {
-                            id,
-                            relative_path: relative_path.to_path_buf(),
-                            cmake_file_type: CMakeFileType::CMakeLists,
-                            references: Vec::new(),
-                        },
+        } else if let Some(cmake_file_type) = is_cmake_file(&path) {
+            // Found a cmake file, add it to the cmake_files collection
+            let relative_path = match path.strip_prefix(project_root) {
+                Ok(relative_path) => relative_path,
+                Err(err) => {
+                    error!(
+                        "Failed to strip prefix {:?} from {:?}: {}",
+                        project_root, path, err
                     );
+                    return Ok(()); // DO NOT RETURN, BUT RATHER CONTINUE
                 }
-            }
+            };
+            let id = cmake_files.len() as u32;
+            cmake_files.insert(
+                id,
+                CMakeFile {
+                    id,
+                    relative_path: relative_path.to_path_buf(),
+                    cmake_file_type,
+                    references: Vec::new(),
+                },
+            );
         }
     }
     Ok(())
 }
 
-/// Extracts the folder name from the given path.
-/// Returns none, if something fails and dumps a log message.
+/// Checks if the given path references a CMakeFile.
+/// That is either a CMakeLists.txt or a file with .cmake extension.
+/// If it is a cmake file it returns either NotClassified or CMakeLists and none
+/// otherwise.
 ///
 /// # Arguments
-/// * `folder` - The path to the folder from which to extract the name.
-fn extract_folder_name(folder: &Path) -> Option<String> {
-    match folder.file_name() {
-        None => {
-            error!("No folder name has been found in {:?}", folder);
-            None
+/// - `file_path` - The path to the file to check.
+fn is_cmake_file(file_path: &Path) -> Option<CMakeFileType> {
+    // First, we check if it is actually a file
+    if !file_path.is_file() {
+        return None;
+    }
+
+    // Check if the file has a CMake extension
+    if let Some(extension) = file_path.extension().and_then(|s| s.to_str()) {
+        if extension.to_lowercase() == "cmake" {
+            return Some(CMakeFileType::NotClassified);
         }
-        Some(name) => match name.to_str() {
-            Some(s) => Some(s.to_string()),
-            None => {
-                error!("Failed to convert folder name {:?} to string", name);
-                None
-            }
-        },
+    }
+
+    // Check if the file is a CMakeLists.txt
+    if let Some(file_name) = file_path.file_name().and_then(|s| s.to_str()) {
+        if file_name.to_lowercase() == "cmakelists.txt" {
+            return Some(CMakeFileType::CMakeLists);
+        }
+    }
+
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_cmake_file() {
+        let p = make_absolute(Path::new("test_data/cmake_files/")).unwrap();
+
+        println!("PWD: {}", std::env::current_dir().unwrap().display());
+
+        let test_cases = vec![
+            (p.join("CMakeLists.txt"), Some(CMakeFileType::CMakeLists)),
+            (p.join("CMAKELISTS.txt"), Some(CMakeFileType::CMakeLists)),
+            (p.join("foo.cmake"), Some(CMakeFileType::NotClassified)),
+            (p.join("bar.txt"), None),
+            (p.join("baz.rs"), None),
+        ];
+
+        for (file_path, expected) in test_cases {
+            assert_eq!(
+                is_cmake_file(file_path.as_path()),
+                expected,
+                "Failed on file: {:?}",
+                file_path
+            );
+        }
     }
 }
