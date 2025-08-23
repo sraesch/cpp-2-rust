@@ -1,8 +1,8 @@
 mod options;
+mod secret;
 
 use anyhow::Result;
 use clap::Parser as _;
-use dotenv::dotenv;
 use log::{LevelFilter, error, info};
 use options::Options;
 use std::io::Write as _;
@@ -41,10 +41,6 @@ async fn run_program() -> Result<()> {
 
     // Get the environment variable API_KEY
     info!("Load API_KEY...");
-
-    if let Err(err) = dotenv() {
-        anyhow::bail!("Failed to load .env file: {}", err);
-    }
 
     info!("Load API_KEY...Ok");
 

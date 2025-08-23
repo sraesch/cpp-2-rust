@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 pub struct LLMOptions {
     /// The LLM model to be used.
     pub model: String,
@@ -7,4 +9,7 @@ pub struct LLMOptions {
 
     /// The API key for the LLM OpenAI API.
     pub api_key: String,
+
+    /// The API timeout for requests.
+    pub api_timeout: Duration,
 }

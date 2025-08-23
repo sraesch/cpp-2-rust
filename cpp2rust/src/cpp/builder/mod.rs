@@ -10,7 +10,7 @@ use url::Url;
 
 use crate::{Error, cpp::CppProject, llm::LLMOptions};
 
-use ai::Client as LLMClient;
+use ai::{Client as LLMClient, Message};
 
 pub use cmake_files::{CMakeFileType, CMakeFiles, find_cmake_project_files};
 
@@ -64,11 +64,15 @@ impl Builder {
             Error::Url(e)
         })?;
 
-        let llm_client =
-            LLMClient::new(options.llm.api_key.clone(), llm_endpoint).map_err(|e| {
-                error!("Failed to create LLM client: {}", e);
-                Error::LLM(e)
-            })?;
+        let llm_client = LLMClient::new(
+            options.llm.api_key.clone(),
+            llm_endpoint,
+            options.llm.api_timeout,
+        )
+        .map_err(|e| {
+            error!("Failed to create LLM client: {}", e);
+            Error::LLM(e)
+        })?;
 
         Ok(Self {
             llm_client,
@@ -139,6 +143,29 @@ impl Builder {
         let prompt_str = Self::create_prompt(&self.options.root_directory, cmake_files)?;
         trace!("LLM Prompt:\n{}", prompt_str);
         self.write_cmake_prompt_to_file(&prompt_str)?;
+
+        // now create the prompt for the LLM
+        let message = Message {
+            role: "user".to_string(),
+            tool_call_id: String::new(),
+            content: prompt_str.clone(),
+            tool_calls: vec![],
+        };
+
+        let prompt =
+            ai::ChatCompletionParameter::new(self.options.llm.model.clone(), vec![message]);
+
+        info!("Send prompt to LLM {}...", self.options.llm.model);
+        let response = self.llm_client.chat_completion(&prompt).await?;
+        info!(
+            "Send prompt to LLM {}...Response received",
+            self.options.llm.model
+        );
+        debug!("LLM Response: {:?}", response);
+
+        for choice in response {
+            println!("Response: {}", choice.message.content);
+        }
 
         // self.llm_client.chat_completion(parameter)
         Ok(())
