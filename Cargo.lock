@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "ai"
 version = "0.1.0"
-source = "git+https://github.com/sraesch/rs-ai.git?rev=9184c94e7691b7c2ef6ef80616c3239a88ae6d66#9184c94e7691b7c2ef6ef80616c3239a88ae6d66"
+source = "git+https://github.com/sraesch/rs-ai.git?rev=be0951a883ad14a8b92a0b647df347c9b351df89#be0951a883ad14a8b92a0b647df347c9b351df89"
 dependencies = [
  "log",
  "reqwest",
@@ -259,6 +259,7 @@ dependencies = [
  "ai",
  "log",
  "schemars",
+ "serde",
  "thiserror",
  "url",
 ]

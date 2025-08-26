@@ -4,6 +4,7 @@
         "cmakelists",
         "dotenv",
         "schemars",
+        "serde",
         "thiserror"
     ]
 }
