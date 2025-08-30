@@ -78,6 +78,34 @@ export default function CMakeConfiguration(): React.JSX.Element {
     })
   }
 
+  const handleChangeBuildDir = async (folder: string): Promise<void> => {
+    setBuildDir(folder)
+
+    console.log(`Invoke load_cache with folder: ${folder}`)
+    const cache = await invoke<CMakeCache | null>('load_cache', { folder })
+    console.log(`Received cache:`, cache)
+
+    if (cache) {
+      const cacheObj = cache as CMakeCache
+      if (cacheObj.generator) {
+        console.log('Generator:', cacheObj.generator)
+        setGenerator(cacheObj.generator)
+      }
+
+      if (cacheObj.source_dir) {
+        console.log('Source Directory:', cacheObj.source_dir)
+        setSourceDir(cacheObj.source_dir)
+      }
+
+      if (cacheObj.build_dir) {
+        console.log('Build Directory:', cacheObj.build_dir)
+        setBuildDir(cacheObj.build_dir)
+      }
+
+      setEntries(cacheObj.variables ? cacheObj.variables : {})
+    }
+  }
+
   const handleBrowseBuild = async (): Promise<void> => {
     console.log('Browse Build Directory')
     // Trigger open dialog in app backend
@@ -86,29 +114,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
       return
     }
 
-    setBuildDir(folder)
-
-    await invoke<CMakeCache | null>('load_cache', { folder }).then((cache) => {
-      if (cache) {
-        const cacheObj = cache as CMakeCache
-        if (cacheObj.generator) {
-          console.log('Generator:', cacheObj.generator)
-          setGenerator(cacheObj.generator)
-        }
-
-        if (cacheObj.source_dir) {
-          console.log('Source Directory:', cacheObj.source_dir)
-          setSourceDir(cacheObj.source_dir)
-        }
-
-        if (cacheObj.build_dir) {
-          console.log('Build Directory:', cacheObj.build_dir)
-          setBuildDir(cacheObj.build_dir)
-        }
-
-        setEntries(cacheObj.variables ? cacheObj.variables : {})
-      }
-    })
+    handleChangeBuildDir(folder)
   }
 
   const handleConfigCMake = (): void => {
@@ -120,7 +126,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
 
     setLogMessages('') // clear log messages
     // Trigger CMake configuration in app backend
-    invoke('cmake:configure', { sourceDir, buildDir, entries })
+    // invoke('handle_configure_cmake', { sourceDir, buildDir, entries })
   }
 
   return (
@@ -161,7 +167,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
           label="Project Build Directory"
           variant="standard"
           value={buildDir}
-          onChange={(e) => setBuildDir(e.target.value)}
+          onChange={(e) => handleChangeBuildDir(e.target.value)}
           fullWidth
           size="small"
         />

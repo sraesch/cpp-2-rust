@@ -719,6 +719,7 @@ dependencies = [
 name = "cpp2rust-app"
 version = "0.1.0"
 dependencies = [
+ "cpp2rust",
  "serde",
  "serde_json",
  "tauri",
