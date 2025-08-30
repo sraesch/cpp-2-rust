@@ -103,6 +103,8 @@ export default function CMakeConfiguration(): React.JSX.Element {
       }
 
       setEntries(cacheObj.variables ? cacheObj.variables : {})
+    } else {
+      setEntries({})
     }
   }
 
@@ -207,7 +209,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
           Add Entry
         </Button>
       </Box>
-      <CMakeTable entries={entries} advanced={advanced} />
+      <CMakeTable entries={entries} advanced={advanced} search={search} />
       <CMakeControls onConfig={handleConfigCMake} generator={generator} />
       <CMakeLog logMessages={logMessages} />
     </Box>

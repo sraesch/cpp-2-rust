@@ -106,6 +106,10 @@ pub fn parse_cmake_cache<R: std::io::Read>(reader: R) -> Option<CMakeCache> {
                 cache.generator = Some(variable.value.clone());
             }
 
+            if variable.var_type == CMakeVariableType::Internal {
+                continue;
+            }
+
             cache
                 .variables
                 .insert(variable.name.clone(), variable.clone());

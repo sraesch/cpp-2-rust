@@ -6,16 +6,31 @@ import TableRow from '@mui/material/TableRow'
 import TableContainer from '@mui/material/TableContainer'
 import Paper from '@mui/material/Paper'
 import { CMakeVariable } from '../cmake'
+import { useMemo } from 'react'
 
 export interface CMakeTableProps {
   entries: Record<string, CMakeVariable>
   advanced?: boolean
+  search?: string
 }
 
-export default function CMakeTable({ entries, advanced }: CMakeTableProps): React.JSX.Element {
-  const filteredEntries = advanced
-    ? entries
-    : Object.fromEntries(Object.entries(entries).filter(([_, variable]) => !variable.advanced))
+export default function CMakeTable({ entries, advanced, search }: CMakeTableProps): React.JSX.Element {
+  const filteredEntries = useMemo(() => {
+    const filteredEntries = advanced
+      ? entries
+      : Object.fromEntries(Object.entries(entries).filter(([_, variable]) => !variable.advanced))
+
+    if (search) {
+      const lowercasedSearch = search.toLowerCase()
+      return Object.fromEntries(
+        Object.entries(filteredEntries).filter(([name, variable]) =>
+          name.toLowerCase().includes(lowercasedSearch) || variable.value.toLowerCase().includes(lowercasedSearch)
+        )
+      )
+    }
+
+    return filteredEntries
+  }, [entries, advanced, search])
 
   return (
     <TableContainer
