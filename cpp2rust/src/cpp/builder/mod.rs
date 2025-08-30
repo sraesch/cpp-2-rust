@@ -1,3 +1,4 @@
+mod cmake_cache;
 mod cmake_files;
 
 use std::path::PathBuf;
@@ -13,6 +14,7 @@ use crate::{
 
 use ai::Client as LLMClient;
 
+pub use cmake_cache::*;
 pub use cmake_files::CMakeFiles;
 
 /// The options for parsing the CPP project structure.

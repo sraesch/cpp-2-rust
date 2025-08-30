@@ -23,6 +23,9 @@ pub enum Error {
 
     #[error("CMake files are not valid UTF-8: {0}")]
     CMakeNotUtf8(#[from] std::string::FromUtf8Error),
+
+    #[error("Unknown CMake variable type: {0}")]
+    CMakeVariableTypeUnknown(String),
 }
 
 /// The result type used in this crate.
