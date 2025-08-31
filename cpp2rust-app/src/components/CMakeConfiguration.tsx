@@ -11,6 +11,7 @@ import { CMakeCache, CMakeVariable } from '../cmake'
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
 import { selectFolder } from '../tauri_utils'
+import CMakeAddVariableDialog from './CMakeAddVariableDialog'
 
 
 function loremIpsum(): string {
@@ -42,6 +43,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [entries, setEntries] = useState<Record<string, CMakeVariable>>({})
   const [logMessages, setLogMessages] = useState<string>('')
   const [generator, setGenerator] = useState<string | undefined>(undefined)
+  const [showAddEntryDialog, setShowAddEntryDialog] = useState<boolean>(false)
 
   // Register listener for CMake log messages which are send on the channel 'cmake:log'
   useEffect(() => {
@@ -125,6 +127,16 @@ export default function CMakeConfiguration(): React.JSX.Element {
     }));
   };
 
+  const handleCloseAddVariableDialog = (variable?: CMakeVariable) => {
+    setShowAddEntryDialog(false);
+    if (variable) {
+      setEntries((prev) => ({
+        ...prev,
+        [variable.name]: variable,
+      }));
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -136,6 +148,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         margin: '16px'
       }}
     >
+      <CMakeAddVariableDialog open={showAddEntryDialog} onClose={handleCloseAddVariableDialog} />
       <Box
         sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
       >
@@ -199,7 +212,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
           />
           <Typography>Advanced</Typography>
         </Box>
-        <Button sx={{ minWidth: '100px', height: '32px' }} variant="outlined" size="small">
+        <Button sx={{ minWidth: '100px', height: '32px' }} variant="outlined" size="small" onClick={() => setShowAddEntryDialog(true)}>
           Add Entry
         </Button>
       </Box>
