@@ -2,6 +2,8 @@ use std::{collections::BTreeMap, io::BufRead, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
+use crate::Error;
+
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum CMakeVariableType {
     Bool,
@@ -31,6 +33,19 @@ pub struct CMakeVariable {
     advanced: bool,
 }
 
+impl std::fmt::Display for CMakeVariableType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            CMakeVariableType::Bool => "BOOL",
+            CMakeVariableType::FilePath => "FILEPATH",
+            CMakeVariableType::Path => "PATH",
+            CMakeVariableType::String => "STRING",
+            CMakeVariableType::Internal => "INTERNAL",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 impl FromStr for CMakeVariableType {
     type Err = crate::Error;
 
@@ -47,44 +62,50 @@ impl FromStr for CMakeVariableType {
     }
 }
 
-/// Parses a CMake variable from a line of text.
-/// Returns The parsed CMake variable or null if parsing failed.
-///
-/// # Arguments
-/// * `line` - The line of text to parse.
-pub fn parse_cmake_variable(line: &str) -> Option<CMakeVariable> {
-    let line = line.trim();
-    if line.starts_with('#') || line.starts_with("//") || line.is_empty() {
-        return None;
+impl FromStr for CMakeVariable {
+    type Err = crate::Error;
+
+    /// Creates an Option<CMakeVariable> from a string.
+    fn from_str(s: &str) -> Result<Self, crate::Error> {
+        let line = s.trim();
+        if line.starts_with('#') || line.starts_with("//") || line.is_empty() {
+            return Err(Error::CMakeVariableParseErrorCommentLine);
+        }
+
+        let (lhs, rhs) = line
+            .split_once('=')
+            .map(|(l, r)| (l.trim(), r.trim()))
+            .ok_or(Error::CMakeVariableParseErrorAssignmentLine)?;
+        if lhs.is_empty() {
+            return Err(Error::CMakeVariableParseErrorMissingName);
+        }
+
+        // split left-hand side by :
+        let (key, var_type_str) = lhs
+            .split_once(':')
+            .map(|(k, v)| (k.trim(), v.trim()))
+            .ok_or(Error::CMakeVariableParseErrorMissingColon)?;
+        if key.is_empty() || var_type_str.is_empty() {
+            return Err(Error::CMakeVariableParseErrorMissingName);
+        }
+
+        // check if advanced has been set
+        let advanced = key.ends_with("-ADVANCED");
+        let name: String = if advanced {
+            key[..key.len() - 9].to_string()
+        } else {
+            key.to_string()
+        };
+
+        let var_type = CMakeVariableType::from_str(var_type_str)?;
+
+        Ok(CMakeVariable {
+            name,
+            var_type,
+            value: rhs.to_string(),
+            advanced,
+        })
     }
-
-    let (lhs, rhs) = line.split_once('=').map(|(l, r)| (l.trim(), r.trim()))?;
-    if lhs.is_empty() {
-        return None;
-    }
-
-    // split left-hand side by :
-    let (key, var_type_str) = lhs.split_once(':').map(|(k, v)| (k.trim(), v.trim()))?;
-    if key.is_empty() || var_type_str.is_empty() {
-        return None;
-    }
-
-    // check if advanced has been set
-    let advanced = key.ends_with("-ADVANCED");
-    let name: String = if advanced {
-        key[..key.len() - 9].to_string()
-    } else {
-        key.to_string()
-    };
-
-    let var_type = CMakeVariableType::from_str(var_type_str).ok()?;
-
-    Some(CMakeVariable {
-        name,
-        var_type,
-        value: rhs.to_string(),
-        advanced,
-    })
 }
 
 /// Parses a CMake cache file.
@@ -98,7 +119,7 @@ pub fn parse_cmake_cache<R: std::io::Read>(reader: R) -> Option<CMakeCache> {
     let reader = std::io::BufReader::new(reader);
     for line in reader.lines() {
         let line = line.unwrap_or_default();
-        let variable = parse_cmake_variable(&line);
+        let variable = CMakeVariable::from_str(&line).ok();
         if let Some(variable) = variable.as_ref() {
             if variable.name == "CMAKE_HOME_DIRECTORY" {
                 cache.source_dir = Some(variable.value.clone());
@@ -118,6 +139,28 @@ pub fn parse_cmake_cache<R: std::io::Read>(reader: R) -> Option<CMakeCache> {
         }
     }
     Some(cache)
+}
+
+/// Patches the CMakeCache.txt given by `in_cmake_cache` and returns the patched CMakeCache.txt as string.
+/// All entries that are present in `patch` will be updated in the output cache.
+/// If new entries are present in `patch`, they will be added to the output cache.
+///
+/// # Arguments
+/// * `in_cmake_cache` - The reader to read the original CMakeCache.txt.
+/// * `patch` - The CMake cache containing the patches to apply.
+pub fn patch_cmake_cache_file<R>(
+    in_cmake_cache: R,
+    patch: &CMakeCache,
+) -> Result<String, std::io::Error>
+where
+    R: std::io::Read,
+{
+    let mut out_cmake_cache = std::io::BufWriter::new(Vec::new());
+    let mut in_cmake_cache = std::io::BufReader::new(in_cmake_cache);
+
+    for line in in_cmake_cache.lines() {}
+
+    todo!()
 }
 
 #[cfg(test)]
@@ -152,51 +195,51 @@ mod test {
     #[test]
     fn test_parse_cmake_variable() {
         assert_eq!(
-            parse_cmake_variable("CMAKE_BUILD_TYPE:STRING=Debug"),
-            Some(CMakeVariable {
+            CMakeVariable::from_str("CMAKE_BUILD_TYPE:STRING=Debug").unwrap(),
+            CMakeVariable {
                 name: "CMAKE_BUILD_TYPE".to_string(),
                 var_type: CMakeVariableType::String,
                 value: "Debug".to_string(),
                 advanced: false,
-            })
+            }
         );
         assert_eq!(
-            parse_cmake_variable("CMAKE_INSTALL_PREFIX:PATH=/usr/local"),
-            Some(CMakeVariable {
+            CMakeVariable::from_str("CMAKE_INSTALL_PREFIX:PATH=/usr/local").unwrap(),
+            CMakeVariable {
                 name: "CMAKE_INSTALL_PREFIX".to_string(),
                 var_type: CMakeVariableType::Path,
                 value: "/usr/local".to_string(),
                 advanced: false,
-            })
+            }
         );
         assert_eq!(
-            parse_cmake_variable("CMAKE_VERBOSE_MAKEFILE:BOOL=ON"),
-            Some(CMakeVariable {
+            CMakeVariable::from_str("CMAKE_VERBOSE_MAKEFILE:BOOL=ON").unwrap(),
+            CMakeVariable {
                 name: "CMAKE_VERBOSE_MAKEFILE".to_string(),
                 var_type: CMakeVariableType::Bool,
                 value: "ON".to_string(),
                 advanced: false,
-            })
+            }
         );
         assert_eq!(
-            parse_cmake_variable("CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON"),
-            Some(CMakeVariable {
+            CMakeVariable::from_str("CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON").unwrap(),
+            CMakeVariable {
                 name: "CMAKE_EXPORT_COMPILE_COMMANDS".to_string(),
                 var_type: CMakeVariableType::Bool,
                 value: "ON".to_string(),
                 advanced: false,
-            })
+            }
         );
         assert_eq!(
-            parse_cmake_variable("CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1"),
-            Some(CMakeVariable {
+            CMakeVariable::from_str("CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1").unwrap(),
+            CMakeVariable {
                 name: "CMAKE_ADDR2LINE".to_string(),
                 var_type: CMakeVariableType::Internal,
                 value: "1".to_string(),
                 advanced: true,
-            })
+            }
         );
-        assert_eq!(parse_cmake_variable("# INTERNAL cache entries"), None);
+        assert!(CMakeVariable::from_str("# INTERNAL cache entries").is_err());
     }
 
     #[test]

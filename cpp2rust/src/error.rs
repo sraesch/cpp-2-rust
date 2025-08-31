@@ -26,6 +26,21 @@ pub enum Error {
 
     #[error("Unknown CMake variable type: {0}")]
     CMakeVariableTypeUnknown(String),
+
+    #[error("CMake variable parse error: empty line")]
+    CMakeVariableParseErrorEmptyLine,
+
+    #[error("CMake variable parse error: comment line")]
+    CMakeVariableParseErrorCommentLine,
+
+    #[error("CMake variable parse error: assignment line (=<value>)")]
+    CMakeVariableParseErrorAssignmentLine,
+
+    #[error("CMake variable parse error: missing name")]
+    CMakeVariableParseErrorMissingName,
+
+    #[error("CMake variable parse error: missing colon (<name>:<type>)")]
+    CMakeVariableParseErrorMissingColon,
 }
 
 /// The result type used in this crate.
