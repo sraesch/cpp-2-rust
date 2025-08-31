@@ -108,6 +108,16 @@ impl FromStr for CMakeVariable {
     }
 }
 
+impl std::fmt::Display for CMakeVariable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.advanced {
+            write!(f, "{}-ADVANCED:{}={}", self.name, self.var_type, self.value)
+        } else {
+            write!(f, "{}:{}={}", self.name, self.var_type, self.value)
+        }
+    }
+}
+
 impl CMakeCache {
     /// Parses a CMake cache file.
     /// Returns the parsed CMake cache.
@@ -141,28 +151,33 @@ impl CMakeCache {
         }
         Some(cache)
     }
-}
 
-/// Patches the CMakeCache.txt given by `in_cmake_cache` and returns the patched CMakeCache.txt as string.
-/// All entries that are present in `patch` will be updated in the output cache.
-/// If new entries are present in `patch`, they will be added to the output cache.
-///
-/// # Arguments
-/// * `in_cmake_cache` - The reader to read the original CMakeCache.txt.
-/// * `patch` - The CMake cache containing the patches to apply.
-pub fn patch_cmake_cache_file<R>(
-    in_cmake_cache: R,
-    patch: &CMakeCache,
-) -> Result<String, std::io::Error>
-where
-    R: std::io::Read,
-{
-    let mut out_cmake_cache = std::io::BufWriter::new(Vec::new());
-    let mut in_cmake_cache = std::io::BufReader::new(in_cmake_cache);
+    /// Patches the CMakeCache.txt given by `in_cmake_cache` and returns the patched CMakeCache.txt as string.
+    /// All entries that are present in `patch` will be updated in the output cache.
+    /// If new entries are present in `patch`, they will be added to the output cache.
+    ///
+    /// # Arguments
+    /// * `in_cmake_cache` - The reader to read the original CMakeCache.txt.
+    /// * `patch` - The CMake cache containing the patches to apply.
+    pub fn patch_cmake_file<R>(&self, in_cmake_cache: R) -> crate::Result<String>
+    where
+        R: std::io::Read,
+    {
+        let reader = std::io::BufReader::new(in_cmake_cache);
+        let mut result = String::new();
+        for line in reader.lines() {
+            let line = line?;
 
-    for line in in_cmake_cache.lines() {}
+            if let Ok(var) = CMakeVariable::from_str(&line) {
+                
+            } else {
+                result.push_str(&line);
+                result.push('\n');
+            }
+        }
 
-    todo!()
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -242,6 +257,22 @@ mod test {
             }
         );
         assert!(CMakeVariable::from_str("# INTERNAL cache entries").is_err());
+    }
+
+    #[test]
+    fn test_display_cmake_variable() {
+        let cmake_strings = [
+            "CMAKE_BUILD_TYPE:STRING=Debug",
+            "CMAKE_INSTALL_PREFIX:PATH=/usr/local",
+            "CMAKE_VERBOSE_MAKEFILE:BOOL=ON",
+            "CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON",
+            "CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1",
+        ];
+
+        for s in &cmake_strings {
+            let var = CMakeVariable::from_str(s).unwrap();
+            assert_eq!(format!("{}", var), *s);
+        }
     }
 
     #[test]
