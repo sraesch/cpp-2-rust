@@ -125,7 +125,15 @@ export default function CMakeConfiguration(): React.JSX.Element {
       ...prev,
       [name]: { ...prev[name], value: newValue },
     }));
-  };
+  }
+
+  const handleDeleteEntry = (name: string): void => {
+    setEntries((prev) => {
+      const newEntries = { ...prev }
+      delete newEntries[name]
+      return newEntries
+    })
+  }
 
   const handleCloseAddVariableDialog = (variable?: CMakeVariable) => {
     setShowAddEntryDialog(false);
@@ -216,7 +224,12 @@ export default function CMakeConfiguration(): React.JSX.Element {
           Add Entry
         </Button>
       </Box>
-      <CMakeTable entries={entries} advanced={advanced} search={search} onChangeEntry={handleChangeEntry} />
+      <CMakeTable entries={entries}
+        advanced={advanced}
+        search={search}
+        onChangeEntry={handleChangeEntry}
+        onDeleteEntry={handleDeleteEntry}
+      />
       <CMakeControls onConfig={handleConfigCMake} generator={generator} />
       <CMakeLog logMessages={logMessages} />
     </Box>

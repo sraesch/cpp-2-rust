@@ -5,6 +5,9 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TableContainer from '@mui/material/TableContainer'
 import Paper from '@mui/material/Paper'
+import IconButton from '@mui/material/IconButton'
+import DeleteIcon from '@mui/icons-material/RemoveCircle'
+
 import { CMakeVariable } from '../cmake'
 import { useMemo } from 'react'
 import { CMakeValue } from './CMakeValue'
@@ -14,9 +17,10 @@ export interface CMakeTableProps {
   advanced?: boolean
   search?: string
   onChangeEntry: (name: string, newValue: string) => void
+  onDeleteEntry: (name: string) => void
 }
 
-export default function CMakeTable({ entries, advanced, search, onChangeEntry }: CMakeTableProps): React.JSX.Element {
+export default function CMakeTable({ entries, advanced, search, onChangeEntry, onDeleteEntry }: CMakeTableProps): React.JSX.Element {
   const filteredEntries = useMemo(() => {
     const filteredEntries = advanced
       ? entries
@@ -42,6 +46,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry }:
       <Table stickyHeader sx={{ minWidth: 650 }} size="small" aria-label="cmake values table">
         <TableHead>
           <TableRow>
+            <TableCell align="left" />
             <TableCell align="left">Name</TableCell>
             <TableCell align="left">Value</TableCell>
           </TableRow>
@@ -49,6 +54,11 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry }:
         <TableBody>
           {Array.from(Object.entries(filteredEntries)).map(([name, variable]) => (
             <TableRow key={name}>
+              <TableCell sx={{ maxWidth: '48px' }}>
+                <IconButton color='secondary' onClick={() => onDeleteEntry(name)}>
+                  <DeleteIcon />
+                </IconButton>
+              </TableCell>
               <TableCell>{name}</TableCell>
               <TableCell>
                 <CMakeValue
