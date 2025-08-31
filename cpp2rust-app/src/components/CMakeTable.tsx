@@ -39,7 +39,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry }:
       component={Paper}
       sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, overflow: 'auto' }}
     >
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+      <Table stickyHeader sx={{ minWidth: 650 }} size="small" aria-label="cmake values table">
         <TableHead>
           <TableRow>
             <TableCell align="left">Name</TableCell>
