@@ -24,6 +24,8 @@ pub struct CMakeCache {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct CMakeVariable {
     name: String,
+
+    #[serde(rename = "varType")]
     var_type: CMakeVariableType,
     value: String,
     advanced: bool,

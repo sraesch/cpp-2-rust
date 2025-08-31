@@ -13,7 +13,7 @@ export interface CMakeCache {
  */
 export type CMakeVariable = {
   name: string
-  type: CMakeVariableType
+  varType: CMakeVariableType
   value: string
   advanced: boolean
 }
@@ -22,9 +22,9 @@ export type CMakeVariable = {
  * The type of variable value.
  */
 export enum CMakeVariableType {
-  BOOL = 'BOOL',
-  FILEPATH = 'FILEPATH',
-  PATH = 'PATH',
-  STRING = 'STRING',
-  INTERNAL = 'INTERNAL'
+  BOOL = 'Bool',
+  FILEPATH = 'FilePath',
+  PATH = 'Path',
+  STRING = 'String',
+  INTERNAL = 'Internal'
 }

@@ -7,14 +7,16 @@ import TableContainer from '@mui/material/TableContainer'
 import Paper from '@mui/material/Paper'
 import { CMakeVariable } from '../cmake'
 import { useMemo } from 'react'
+import { CMakeValue } from './CMakeValue'
 
 export interface CMakeTableProps {
   entries: Record<string, CMakeVariable>
   advanced?: boolean
   search?: string
+  onChangeEntry: (name: string, newValue: string) => void
 }
 
-export default function CMakeTable({ entries, advanced, search }: CMakeTableProps): React.JSX.Element {
+export default function CMakeTable({ entries, advanced, search, onChangeEntry }: CMakeTableProps): React.JSX.Element {
   const filteredEntries = useMemo(() => {
     const filteredEntries = advanced
       ? entries
@@ -48,7 +50,15 @@ export default function CMakeTable({ entries, advanced, search }: CMakeTableProp
           {Array.from(Object.entries(filteredEntries)).map(([name, variable]) => (
             <TableRow key={name}>
               <TableCell>{name}</TableCell>
-              <TableCell>{variable.value}</TableCell>
+              <TableCell>
+                <CMakeValue
+                  varType={variable.varType}
+                  value={variable.value}
+                  onChange={(newValue) => {
+                    onChangeEntry(name, newValue)
+                  }}
+                />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

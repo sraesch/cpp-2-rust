@@ -35,12 +35,14 @@ function loremIpsum(): string {
 
 /**
  * Opens a dialog to select a folder.
+ * @param defaultPath - The default path to open the dialog at.
  * @returns The selected folder path or undefined if no folder was selected.
  */
-async function selectFolder(): Promise<string | null> {
+async function selectFolder(defaultPath?: string): Promise<string | null> {
   const folder = await open({
     multiple: false,
     directory: true,
+    defaultPath
   });
 
   return folder
@@ -71,7 +73,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
     console.log('Browse Source Directory')
 
     // Trigger open dialog in app backend
-    selectFolder().then((folder) => {
+    selectFolder(sourceDir).then((folder) => {
       if (folder) {
         setSourceDir(folder)
       }
@@ -111,7 +113,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const handleBrowseBuild = async (): Promise<void> => {
     console.log('Browse Build Directory')
     // Trigger open dialog in app backend
-    const folder = await selectFolder()
+    const folder = await selectFolder(buildDir)
     if (!folder) {
       return
     }
@@ -130,6 +132,13 @@ export default function CMakeConfiguration(): React.JSX.Element {
     // Trigger CMake configuration in app backend
     // invoke('handle_configure_cmake', { sourceDir, buildDir, entries })
   }
+
+  const handleChangeEntry = (name: string, newValue: string): void => {
+    setEntries((prev) => ({
+      ...prev,
+      [name]: { ...prev[name], value: newValue },
+    }));
+  };
 
   return (
     <Box
@@ -209,7 +218,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
           Add Entry
         </Button>
       </Box>
-      <CMakeTable entries={entries} advanced={advanced} search={search} />
+      <CMakeTable entries={entries} advanced={advanced} search={search} onChangeEntry={handleChangeEntry} />
       <CMakeControls onConfig={handleConfigCMake} generator={generator} />
       <CMakeLog logMessages={logMessages} />
     </Box>
