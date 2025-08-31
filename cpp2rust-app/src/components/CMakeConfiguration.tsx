@@ -9,8 +9,8 @@ import CMakeControls from './CMakeControls'
 import CMakeLog from './CMakeLog'
 import { CMakeCache, CMakeVariable } from '../cmake'
 import { listen } from '@tauri-apps/api/event'
-import { open } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
+import { selectFolder } from '../tauri_utils'
 
 
 function loremIpsum(): string {
@@ -31,21 +31,6 @@ function loremIpsum(): string {
     Create Test Target: test_cache_reader
     Configuring done
     `
-}
-
-/**
- * Opens a dialog to select a folder.
- * @param defaultPath - The default path to open the dialog at.
- * @returns The selected folder path or undefined if no folder was selected.
- */
-async function selectFolder(defaultPath?: string): Promise<string | null> {
-  const folder = await open({
-    multiple: false,
-    directory: true,
-    defaultPath
-  });
-
-  return folder
 }
 
 export default function CMakeConfiguration(): React.JSX.Element {

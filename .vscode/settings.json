@@ -5,6 +5,8 @@
         "dotenv",
         "schemars",
         "serde",
-        "thiserror"
+        "tauri",
+        "thiserror",
+        "unlisten"
     ]
 }

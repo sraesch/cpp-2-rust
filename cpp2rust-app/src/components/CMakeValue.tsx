@@ -5,6 +5,7 @@ import IconButton from "@mui/material/IconButton"
 import FileOpen from "@mui/icons-material/FileOpen"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import { CMakeVariableType } from "../cmake"
+import { selectFile, selectFolder } from "../tauri_utils"
 
 export interface CMakeValueProps {
     varType: CMakeVariableType
@@ -14,6 +15,20 @@ export interface CMakeValueProps {
 
 export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
     const { varType, value, onChange } = props
+
+    const handleOpenFolder = async () => {
+        const folder = await selectFolder(value)
+        if (folder) {
+            onChange(folder)
+        }
+    }
+
+    const handleOpenFile = async () => {
+        const file = await selectFile(value)
+        if (file) {
+            onChange(file)
+        }
+    }
 
     if (varType === CMakeVariableType.BOOL) {
         return (
@@ -53,9 +68,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
                                     aria-label={
                                         varType === CMakeVariableType.PATH ? 'Choose a folder' : 'Choose a file'
                                     }
-                                    // onClick={handleClickShowPassword}
-                                    // onMouseDown={handleMouseDownPassword}
-                                    // onMouseUp={handleMouseUpPassword}
+                                    onClick={varType === CMakeVariableType.PATH ? handleOpenFolder : handleOpenFile}
                                     edge="end"
                                 >
                                     {varType === CMakeVariableType.PATH ? <FolderOpen fontSize="small" /> : <FileOpen fontSize="small" />}
