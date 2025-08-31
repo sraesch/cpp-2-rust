@@ -1,6 +1,6 @@
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path};
 
-use cpp2rust::cpp::{parse_cmake_cache, CMakeCache};
+use cpp2rust::cpp::{CMakeCache, CMakeVariable};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -26,7 +26,20 @@ fn load_cache(folder: &str) -> Option<CMakeCache> {
     // open file to CMakeCache.txt
     let file = std::fs::File::open(cache_file).ok()?;
 
-    parse_cmake_cache(file)
+    CMakeCache::parse(file)
+}
+
+type Entries = BTreeMap<String, CMakeVariable>;
+
+#[tauri::command]
+fn configure_cmake(source_dir: &str, build_dir: &str, entries: Entries) {
+    // Implement the CMake configuration logic here
+    println!("Configuring CMake with:");
+    println!("Source Directory: {}", source_dir);
+    println!("Build Directory: {}", build_dir);
+    for (name, value) in entries.iter() {
+        println!("Entry: {} = {:?}", name, value);
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,7 +47,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![load_cache])
+        .invoke_handler(tauri::generate_handler![load_cache, configure_cmake])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

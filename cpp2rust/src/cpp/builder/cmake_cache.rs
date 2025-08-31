@@ -108,37 +108,39 @@ impl FromStr for CMakeVariable {
     }
 }
 
-/// Parses a CMake cache file.
-/// Returns the parsed CMake cache.
-///
-/// # Arguments
-/// * `reader` - The reader for the CMake cache file.
-pub fn parse_cmake_cache<R: std::io::Read>(reader: R) -> Option<CMakeCache> {
-    let mut cache: CMakeCache = CMakeCache::default();
+impl CMakeCache {
+    /// Parses a CMake cache file.
+    /// Returns the parsed CMake cache.
+    ///
+    /// # Arguments
+    /// * `reader` - The reader for the CMake cache file.
+    pub fn parse<R: std::io::Read>(reader: R) -> Option<Self> {
+        let mut cache: CMakeCache = CMakeCache::default();
 
-    let reader = std::io::BufReader::new(reader);
-    for line in reader.lines() {
-        let line = line.unwrap_or_default();
-        let variable = CMakeVariable::from_str(&line).ok();
-        if let Some(variable) = variable.as_ref() {
-            if variable.name == "CMAKE_HOME_DIRECTORY" {
-                cache.source_dir = Some(variable.value.clone());
-            } else if variable.name == "CMAKE_CACHEFILE_DIR" {
-                cache.build_dir = Some(variable.value.clone());
-            } else if variable.name == "CMAKE_GENERATOR" {
-                cache.generator = Some(variable.value.clone());
+        let reader = std::io::BufReader::new(reader);
+        for line in reader.lines() {
+            let line = line.unwrap_or_default();
+            let variable = CMakeVariable::from_str(&line).ok();
+            if let Some(variable) = variable.as_ref() {
+                if variable.name == "CMAKE_HOME_DIRECTORY" {
+                    cache.source_dir = Some(variable.value.clone());
+                } else if variable.name == "CMAKE_CACHEFILE_DIR" {
+                    cache.build_dir = Some(variable.value.clone());
+                } else if variable.name == "CMAKE_GENERATOR" {
+                    cache.generator = Some(variable.value.clone());
+                }
+
+                if variable.var_type == CMakeVariableType::Internal {
+                    continue;
+                }
+
+                cache
+                    .variables
+                    .insert(variable.name.clone(), variable.clone());
             }
-
-            if variable.var_type == CMakeVariableType::Internal {
-                continue;
-            }
-
-            cache
-                .variables
-                .insert(variable.name.clone(), variable.clone());
         }
+        Some(cache)
     }
-    Some(cache)
 }
 
 /// Patches the CMakeCache.txt given by `in_cmake_cache` and returns the patched CMakeCache.txt as string.
@@ -245,7 +247,7 @@ mod test {
     #[test]
     fn test_parse_cmake_cache() {
         let cmake_cache_content = include_bytes!("../../../test_data/CMakeCache.txt");
-        let cache = parse_cmake_cache(&cmake_cache_content[..]).unwrap();
+        let cache = CMakeCache::parse(&cmake_cache_content[..]).unwrap();
 
         assert!(cache.source_dir.is_some());
         assert!(cache.build_dir.is_some());
