@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, path::Path};
 
-use cpp2rust::cpp::{CMakeCache, CMakeVariable};
-use log::{debug, info, log_enabled, Level};
+use cpp2rust::cpp::{CMakeCache, CMakeVariable, Variables};
+use log::{debug, error, info, log_enabled, Level};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -32,10 +32,8 @@ fn load_cache(folder: &str) -> Option<CMakeCache> {
     CMakeCache::parse(file)
 }
 
-type Entries = BTreeMap<String, CMakeVariable>;
-
 #[tauri::command]
-fn generate_cmake(source_dir: &str, build_dir: &str, entries: Entries) {
+fn generate_cmake(source_dir: &str, build_dir: &str, entries: Variables) -> Option<CMakeCache> {
     // Implement the CMake generation logic here
     info!("Generating CMake with:");
     info!("Source Directory: {}", source_dir);
@@ -45,6 +43,27 @@ fn generate_cmake(source_dir: &str, build_dir: &str, entries: Entries) {
             debug!("Entry: {} = {:?}", name, value);
         }
     }
+
+    // make sure the build directory exists
+    info!("Ensuring build directory exists: {}", build_dir);
+    if let Err(err) = std::fs::create_dir_all(build_dir) {
+        error!("Failed to create build directory: {}", err);
+        return None;
+    }
+
+    todo!()
+
+    // // Try to load cmake cache file and patch it
+    // let cache = load_cache(build_dir);
+    // if let Some(cache) = cache {
+    //     info!("Loaded CMake cache successfully.");
+    //     // Use the cache for CMake generation
+    // } else {
+    //     info!("Failed to load CMake cache.");
+    //     return false;
+    // }
+
+    // true
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

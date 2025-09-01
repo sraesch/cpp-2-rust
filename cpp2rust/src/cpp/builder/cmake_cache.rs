@@ -1,6 +1,7 @@
 use std::{
     collections::{BTreeMap, HashSet},
     io::BufRead,
+    path::Path,
     str::FromStr,
 };
 
@@ -17,13 +18,16 @@ pub enum CMakeVariableType {
     Internal,
 }
 
+/// The list of CMake Variables in a cache.
+pub type Variables = BTreeMap<String, CMakeVariable>;
+
 /// Represents a CMake cache file.
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct CMakeCache {
     source_dir: Option<String>,
     build_dir: Option<String>,
     generator: Option<String>,
-    variables: BTreeMap<String, CMakeVariable>,
+    variables: Variables,
 }
 
 /// Represents a CMake variable.
@@ -155,61 +159,83 @@ impl CMakeCache {
         }
         Some(cache)
     }
+}
 
-    /// Patches the CMakeCache.txt given by `in_cmake_cache` and returns the patched CMakeCache.txt as string.
-    /// All entries that are present in `patch` will be updated in the output cache.
-    /// If new entries are present in `patch`, they will be added to the output cache.
-    ///
-    /// # Arguments
-    /// * `in_cmake_cache` - The reader to read the original CMakeCache.txt.
-    /// * `patch` - The CMake cache containing the patches to apply.
-    pub fn patch_cmake_file<R>(&self, in_cmake_cache: R) -> crate::Result<String>
-    where
-        R: std::io::Read,
-    {
-        // create a list of potentially new entries that will be added to the end
-        let mut new_entries: HashSet<String> = HashSet::from_iter(self.variables.keys().cloned());
+/// Patches the CMakeCache.txt data given by the reader with the variables provided by
+/// Existing CMakeCache entries are overridden and new entries are added.
+///
+/// # Arguments
+/// * `in_cmake_cache` - The reader for the existing CMakeCache.txt data.
+/// * `patch` - The variables to patch the CMakeCache.txt data with.
+pub fn patch_cmake_cache_data<R>(in_cmake_cache: R, patch: &Variables) -> crate::Result<String>
+where
+    R: std::io::Read,
+{
+    // create a list of potentially new entries that will be added to the end
+    let mut new_entries: HashSet<String> = HashSet::from_iter(patch.keys().cloned());
 
-        // patch existing entries
-        let reader = std::io::BufReader::new(in_cmake_cache);
-        let mut result = String::new();
-        for line in reader.lines() {
-            let line = line?;
+    // patch existing entries
+    let reader = std::io::BufReader::new(in_cmake_cache);
+    let mut result = String::new();
+    for line in reader.lines() {
+        let line = line?;
 
-            // Either the current line is a CMake variable or a regular line.
-            // If it is a regular line, we just push it to the result.
-            // If it is a CMake variable, we check if it is in the patch.
-            if let Ok(var) = CMakeVariable::from_str(&line) {
-                new_entries.remove(&var.name);
+        // Either the current line is a CMake variable or a regular line.
+        // If it is a regular line, we just push it to the result.
+        // If it is a CMake variable, we check if it is in the patch.
+        if let Ok(var) = CMakeVariable::from_str(&line) {
+            new_entries.remove(&var.name);
 
-                if let Some(patch_var) = self.variables.get(&var.name) {
-                    result.push_str(&patch_var.to_string());
-                    result.push('\n');
-                } else {
-                    result.push_str(&var.to_string());
-                    result.push('\n');
-                }
+            if let Some(patch_var) = patch.get(&var.name) {
+                result.push_str(&patch_var.to_string());
+                result.push('\n');
             } else {
-                result.push_str(&line);
-                result.push('\n');
-            }
-        }
-
-        // append new entries at the end
-        for name in new_entries {
-            if let Some(var) = self.variables.get(&name) {
-                result.push('\n');
                 result.push_str(&var.to_string());
                 result.push('\n');
             }
+        } else {
+            result.push_str(&line);
+            result.push('\n');
         }
-
-        Ok(result)
     }
+
+    // append new entries at the end
+    for name in new_entries {
+        if let Some(var) = patch.get(&name) {
+            result.push('\n');
+            result.push_str(&var.to_string());
+            result.push('\n');
+        }
+    }
+
+    Ok(result)
+}
+
+/// Patches the CMakeCache.txt file at the given path with the variables provided by
+/// the patch.
+///
+/// # Arguments
+/// * `file` - The path to the CMakeCache.txt file.
+/// * `patch` - The variables to patch the CMakeCache.txt file with.
+pub fn patch_cmake_file(file: &Path, patch: &Variables) -> crate::Result<()> {
+    // create patched cmake data
+    let patched_cmake_file = {
+        let reader = std::fs::File::open(file)?;
+        patch_cmake_cache_data(reader, patch)?
+    };
+
+    // write patched cmake data to the file again
+    std::fs::write(file, patched_cmake_file)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
 mod test {
+    use std::fs::File;
+
+    use tempdir::TempDir;
+
     use super::*;
 
     #[test]
@@ -331,15 +357,13 @@ mod test {
         let cmake_cache_content = include_str!("../../../test_data/CMakeCache.txt");
         let cache0 = CMakeCache::parse(cmake_cache_content.as_bytes()).unwrap();
 
-        let mut patch = CMakeCache::default();
-        patch.variables.insert(
+        let mut variables = Variables::default();
+        variables.insert(
             "CMAKE_COLOR_MAKEFILE".to_string(),
             CMakeVariable::from_str("CMAKE_COLOR_MAKEFILE:BOOL=OFF").unwrap(),
         );
 
-        let result = patch
-            .patch_cmake_file(cmake_cache_content.as_bytes())
-            .unwrap();
+        let result = patch_cmake_cache_data(cmake_cache_content.as_bytes(), &variables).unwrap();
 
         let patched_cache = CMakeCache::parse(result.as_bytes()).unwrap();
 
@@ -355,13 +379,13 @@ mod test {
         {
             assert_eq!(orig_var.name, patched_var.name);
             if orig_var != patched_var {
-                assert_eq!(patch.variables.get(&orig_var.name), Some(patched_var));
+                assert_eq!(variables.get(&orig_var.name), Some(patched_var));
             }
         }
 
         assert_eq!(
             patched_cache.variables.get("CMAKE_COLOR_MAKEFILE"),
-            Some(&patch.variables["CMAKE_COLOR_MAKEFILE"])
+            Some(&variables["CMAKE_COLOR_MAKEFILE"])
         );
     }
 
@@ -370,20 +394,17 @@ mod test {
         let cmake_cache_content = include_str!("../../../test_data/CMakeCache.txt");
         let cache0 = CMakeCache::parse(cmake_cache_content.as_bytes()).unwrap();
 
-        let mut patch = CMakeCache::default();
-        patch.variables.insert(
+        let mut variables = Variables::default();
+        variables.insert(
             "CMAKE_COLOR_MAKEFILE".to_string(),
             CMakeVariable::from_str("CMAKE_COLOR_MAKEFILE:BOOL=OFF").unwrap(),
         );
-        patch.variables.insert(
+        variables.insert(
             "NEW_VARIABLE".to_string(),
             CMakeVariable::from_str("NEW_VARIABLE:STRING=HelloWorld").unwrap(),
         );
 
-        let result = patch
-            .patch_cmake_file(cmake_cache_content.as_bytes())
-            .unwrap();
-
+        let result = patch_cmake_cache_data(cmake_cache_content.as_bytes(), &variables).unwrap();
         let patched_cache = CMakeCache::parse(result.as_bytes()).unwrap();
 
         assert_eq!(patched_cache.source_dir, cache0.source_dir);
@@ -398,29 +419,78 @@ mod test {
         {
             assert_eq!(orig_var.name, patched_var.name);
             if orig_var != patched_var {
-                assert_eq!(patch.variables.get(&orig_var.name), Some(patched_var));
+                assert_eq!(variables.get(&orig_var.name), Some(patched_var));
             }
         }
 
         assert_eq!(
             patched_cache.variables.get("CMAKE_COLOR_MAKEFILE"),
-            Some(&patch.variables["CMAKE_COLOR_MAKEFILE"])
+            Some(&variables["CMAKE_COLOR_MAKEFILE"])
         );
         assert_eq!(
             patched_cache.variables.get("NEW_VARIABLE"),
-            Some(&patch.variables["NEW_VARIABLE"])
+            Some(&variables["NEW_VARIABLE"])
         );
     }
 
     #[test]
     fn test_patch_cmake_cache_no_change() {
         let cmake_cache_content = include_str!("../../../test_data/CMakeCache.txt");
-        let cache = CMakeCache::default();
+        let variables = Variables::default();
 
-        let result = cache
-            .patch_cmake_file(cmake_cache_content.as_bytes())
-            .unwrap();
+        let result = patch_cmake_cache_data(cmake_cache_content.as_bytes(), &variables).unwrap();
 
         assert_eq!(result, cmake_cache_content);
+    }
+
+    #[test]
+    fn test_patch_cmake_file() {
+        let cmake_cache_content = include_str!("../../../test_data/CMakeCache.txt");
+        let cache0 = CMakeCache::parse(cmake_cache_content.as_bytes()).unwrap();
+
+        let dir = TempDir::new("cmake_test_build_dir").unwrap();
+
+        // create CMakeCache.txt in that directory
+        let cmake_cache_path = dir.path().join("CMakeCache.txt");
+        std::fs::write(&cmake_cache_path, cmake_cache_content).unwrap();
+
+        // patch CMakeCache.txt
+        let mut variables = Variables::default();
+        variables.insert(
+            "CMAKE_COLOR_MAKEFILE".to_string(),
+            CMakeVariable::from_str("CMAKE_COLOR_MAKEFILE:BOOL=OFF").unwrap(),
+        );
+        variables.insert(
+            "NEW_VARIABLE".to_string(),
+            CMakeVariable::from_str("NEW_VARIABLE:STRING=HelloWorld").unwrap(),
+        );
+        patch_cmake_file(&cmake_cache_path, &variables).unwrap();
+
+        let patched_cache = CMakeCache::parse(File::open(&cmake_cache_path).unwrap()).unwrap();
+
+        assert_eq!(patched_cache.source_dir, cache0.source_dir);
+        assert_eq!(patched_cache.build_dir, cache0.build_dir);
+        assert_eq!(patched_cache.generator, cache0.generator);
+        assert_eq!(patched_cache.variables.len(), cache0.variables.len() + 1);
+
+        for (orig_var, patched_var) in cache0
+            .variables
+            .values()
+            .zip(patched_cache.variables.values())
+        {
+            assert_eq!(orig_var.name, patched_var.name);
+            if orig_var != patched_var {
+                assert_eq!(variables.get(&orig_var.name), Some(patched_var));
+            }
+        }
+
+        assert_eq!(
+            patched_cache.variables.get("CMAKE_COLOR_MAKEFILE"),
+            Some(&variables["CMAKE_COLOR_MAKEFILE"])
+        );
+        assert_eq!(
+            patched_cache.variables.get("NEW_VARIABLE"),
+            Some(&variables["NEW_VARIABLE"])
+        );
     }
 }
