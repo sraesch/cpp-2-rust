@@ -12,6 +12,7 @@ import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
 import { selectFolder } from '../tauri_utils'
 import CMakeAddVariableDialog from './CMakeAddVariableDialog'
+import { info, warn } from '@tauri-apps/plugin-log'
 
 
 function loremIpsum(): string {
@@ -108,16 +109,24 @@ export default function CMakeConfiguration(): React.JSX.Element {
     handleChangeBuildDir(folder)
   }
 
-  const handleConfigCMake = (): void => {
-    console.log('Configure CMake')
+  const handleGenerate = (): void => {
+    info('Generate CMake...')
     if (!sourceDir) {
+      warn('Source Directory is not set!')
       setLogMessages((prev) => prev + '\n' + 'Error: Source Directory is not set!')
       return
     }
 
+    if (!buildDir) {
+      warn('Build Directory is not set!')
+      setLogMessages((prev) => prev + '\n' + 'Error: Build Directory is not set!')
+      return
+    }
+
     setLogMessages('') // clear log messages
-    // Trigger CMake configuration in app backend
-    // invoke('handle_configure_cmake', { sourceDir, buildDir, entries })
+
+    // Trigger CMake generation in app backend
+    invoke('generate_cmake', { sourceDir, buildDir, entries })
   }
 
   const handleChangeEntry = (name: string, newValue: string): void => {
@@ -230,7 +239,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         onChangeEntry={handleChangeEntry}
         onDeleteEntry={handleDeleteEntry}
       />
-      <CMakeControls onConfig={handleConfigCMake} generator={generator} />
+      <CMakeControls onGenerate={handleGenerate} generator={generator} />
       <CMakeLog logMessages={logMessages} />
     </Box>
   )

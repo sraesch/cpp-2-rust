@@ -35,9 +35,9 @@ fn load_cache(folder: &str) -> Option<CMakeCache> {
 type Entries = BTreeMap<String, CMakeVariable>;
 
 #[tauri::command]
-fn configure_cmake(source_dir: &str, build_dir: &str, entries: Entries) {
-    // Implement the CMake configuration logic here
-    info!("Configuring CMake with:");
+fn generate_cmake(source_dir: &str, build_dir: &str, entries: Entries) {
+    // Implement the CMake generation logic here
+    info!("Generating CMake with:");
     info!("Source Directory: {}", source_dir);
     info!("Build Directory: {}", build_dir);
     if log_enabled!(Level::Debug) {
@@ -61,7 +61,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![load_cache, configure_cmake])
+        .invoke_handler(tauri::generate_handler![load_cache, generate_cmake])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
