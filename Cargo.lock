@@ -813,6 +813,7 @@ dependencies = [
  "log",
  "schemars 1.0.4",
  "serde",
+ "tempfile",
  "thiserror 2.0.16",
  "url",
 ]

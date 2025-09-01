@@ -234,7 +234,7 @@ pub fn patch_cmake_file(file: &Path, patch: &Variables) -> crate::Result<()> {
 mod test {
     use std::fs::File;
 
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use super::*;
 
@@ -448,7 +448,7 @@ mod test {
         let cmake_cache_content = include_str!("../../../test_data/CMakeCache.txt");
         let cache0 = CMakeCache::parse(cmake_cache_content.as_bytes()).unwrap();
 
-        let dir = TempDir::new("cmake_test_build_dir").unwrap();
+        let dir = TempDir::new().unwrap();
 
         // create CMakeCache.txt in that directory
         let cmake_cache_path = dir.path().join("CMakeCache.txt");
