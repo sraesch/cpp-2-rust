@@ -4,7 +4,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from "@mui/material/IconButton"
 import FileOpen from "@mui/icons-material/FileOpen"
 import FolderOpen from "@mui/icons-material/FolderOpen"
-import { CMakeVariableType } from "../cmake"
+import { CMakeVariableType } from "../backend/cmake"
 import { selectFile, selectFolder } from "../tauri_utils"
 
 export interface CMakeValueProps {

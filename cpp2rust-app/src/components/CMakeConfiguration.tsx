@@ -1,43 +1,17 @@
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
 import CMakeTable from './CMakeTable'
 import CMakeControls from './CMakeControls'
 import CMakeLog from './CMakeLog'
-import { CMakeCache, CMakeVariable } from '../cmake'
-import { listen } from '@tauri-apps/api/event'
-import { invoke } from '@tauri-apps/api/core'
+import { CMakeCache, CMakeVariable } from '../backend/cmake'
 import { selectFolder } from '../tauri_utils'
 import CMakeAddVariableDialog from './CMakeAddVariableDialog'
 import { info, warn } from '@tauri-apps/plugin-log'
-
-
-function loremIpsum(): string {
-  return `
-    Skipping web integration as there is no emscripten configured
-    Applying Compiler Defaults (Unix)
-    Skipping web integration as there is no emscripten configured
-    Tests are enabled
-    Found GTest
-    GLM_INCLUDE_DIRS .............. /Users/sascharasch/libs/glm/include
-    Create Test Target: test_utils
-    Create Test Target: test_logging
-    Create Test Target: test_program_args
-    GLM_INCLUDE_DIRS .............. /Users/sascharasch/libs/glm/include
-    RapidJSON found. Headers: /Users/sascharasch/src/rapidjson/include
-    Create Test Target: test_cache_fmt
-    Create Test Target: test_cache_gen
-    Create Test Target: test_cache_reader
-    Configuring done
-    `
-}
-
-interface CMakeLoggingMessage {
-  message: string;
-}
+import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 
 
 export default function CMakeConfiguration(): React.JSX.Element {
@@ -52,15 +26,9 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [showAddEntryDialog, setShowAddEntryDialog] = useState<boolean>(false)
 
   // Register listener for CMake log messages which are send on the channel 'cmake_logging'
-  useEffect(() => {
-    const unlistenPromise = listen<CMakeLoggingMessage>('cmake_logging', (event) => {
-      setLogMessages((prev) => prev + '\n' + event.payload.message)
-    })
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten())
-    }
-  }, [])
+  useCMakeLogMessages((message) => {
+    setLogMessages((prev) => prev + '\n' + message)
+  })
 
   const handleBrowseSource = (): void => {
     console.log('Browse Source Directory')
@@ -77,7 +45,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
     setBuildDir(folder)
 
     console.log(`Invoke load_cache with folder: ${folder}`)
-    const cache = await invoke<CMakeCache | null>('load_cache', { folder })
+    const cache = await loadCacheFolder(folder)
     console.log(`Received cache:`, cache)
 
     if (cache) {
@@ -131,7 +99,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
     setLogMessages('') // clear log messages
 
     // Trigger CMake generation in app backend
-    let ret = await invoke<CMakeCache | null>('generate_cmake', { sourceDir, buildDir, entries })
+    let ret = await generateCMake({ sourceDir, buildDir, entries })
     if (ret) {
       setEntries(ret.variables ? ret.variables : {})
     }

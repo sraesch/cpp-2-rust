@@ -8,7 +8,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import Box from '@mui/material/Box'
 
-import { CMakeVariable, CMakeVariableType, isCMakeVariableNameValid, isCMakeVariableValid } from '../cmake';
+import { CMakeVariable, CMakeVariableType, isCMakeVariableNameValid, isCMakeVariableValid } from '../backend/cmake';
 import { useEffect, useMemo, useState } from 'react'
 import { CMakeValue } from './CMakeValue'
 
