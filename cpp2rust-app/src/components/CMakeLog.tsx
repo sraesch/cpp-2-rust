@@ -22,7 +22,7 @@ export default function CMakeLog({ logMessages }: CMakeLogProps): React.JSX.Elem
         flexDirection: 'row',
       }}
     >
-      <List dense={true} sx={{ width: '100%', bgcolor: 'background.paper', flexGrow: 1 }}>
+      <List dense={true} sx={{ width: '100%', bgcolor: 'background.paper', flexGrow: 1, minHeight: '512px' }}>
         {lines.map((line, index) => (
           <ListItem key={index}>
             <Typography variant="body2">{line}</Typography>

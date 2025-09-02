@@ -35,6 +35,11 @@ function loremIpsum(): string {
     `
 }
 
+interface CMakeLoggingMessage {
+  message: string;
+}
+
+
 export default function CMakeConfiguration(): React.JSX.Element {
   const [sourceDir, setSourceDir] = useState<string>('')
   const [buildDir, setBuildDir] = useState<string>('')
@@ -46,10 +51,10 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [generator, setGenerator] = useState<string | undefined>(undefined)
   const [showAddEntryDialog, setShowAddEntryDialog] = useState<boolean>(false)
 
-  // Register listener for CMake log messages which are send on the channel 'cmake:log'
+  // Register listener for CMake log messages which are send on the channel 'cmake_logging'
   useEffect(() => {
-    const unlistenPromise = listen<string>('cmake:log', (event) => {
-      setLogMessages((prev) => prev + '\n' + event.payload)
+    const unlistenPromise = listen<CMakeLoggingMessage>('cmake_logging', (event) => {
+      setLogMessages((prev) => prev + '\n' + event.payload.message)
     })
 
     return () => {
@@ -109,7 +114,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
     handleChangeBuildDir(folder)
   }
 
-  const handleGenerate = (): void => {
+  const handleGenerate = async (): Promise<void> => {
     info('Generate CMake...')
     if (!sourceDir) {
       warn('Source Directory is not set!')
@@ -126,7 +131,10 @@ export default function CMakeConfiguration(): React.JSX.Element {
     setLogMessages('') // clear log messages
 
     // Trigger CMake generation in app backend
-    invoke('generate_cmake', { sourceDir, buildDir, entries })
+    let ret = await invoke<CMakeCache | null>('generate_cmake', { sourceDir, buildDir, entries })
+    if (ret) {
+      setEntries(ret.variables ? ret.variables : {})
+    }
   }
 
   const handleChangeEntry = (name: string, newValue: string): void => {
