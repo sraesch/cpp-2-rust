@@ -1,6 +1,6 @@
 [workspace]
 
-members = ["cpp2rust", "cpp2rust-cli"]
+members = ["cpp2rust", "cpp2rust-cli", "cpp2rust-app/src-tauri"]
 resolver = "3"
 
 [profile.release-with-debug]

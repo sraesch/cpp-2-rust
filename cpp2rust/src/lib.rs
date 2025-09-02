@@ -1,8 +1,6 @@
 mod error;
+mod utils;
+pub mod cpp;
+pub mod llm;
 
 pub use error::*;
-
-/// A simple function to square a number
-pub fn sqr(x: f64) -> f64 {
-    x * x
-}

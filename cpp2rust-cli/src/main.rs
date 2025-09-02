@@ -1,4 +1,5 @@
 mod options;
+mod secret;
 
 use anyhow::Result;
 use clap::Parser as _;
@@ -34,19 +35,37 @@ fn initialize_logging(filter: LevelFilter) {
 }
 
 /// Runs the program.
-fn run_program() -> Result<()> {
+async fn run_program() -> Result<()> {
     let options = parse_args()?;
     initialize_logging(LevelFilter::from(options.log_level));
 
-    options.dump_to_log();
+    // Get the environment variable API_KEY
+    info!("Load API_KEY...");
 
-    info!("Do something useful here...");
+    info!("Load API_KEY...Ok");
+
+    info!("Options:");
+    options.dump_to_log();
+    info!("-------");
+
+    // make sure the output directory exists
+    std::fs::create_dir_all(&options.output_directory)?;
+
+    match options.command {
+        options::Commands::Project(_) => {
+            info!("Running command: Project");
+            let cpp_options: cpp2rust::cpp::Options = options.into();
+            let project = cpp2rust::cpp::build_cpp_project(cpp_options).await?;
+            info!("Parsed C++ project: {:?}", project);
+        }
+    }
 
     Ok(())
 }
 
-fn main() {
-    match run_program() {
+#[tokio::main]
+async fn main() {
+    match run_program().await {
         Ok(()) => {
             info!("SUCCESS");
         }
