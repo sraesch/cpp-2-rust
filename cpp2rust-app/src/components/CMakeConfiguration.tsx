@@ -12,15 +12,27 @@ import CMakeAddVariableDialog from './CMakeAddVariableDialog'
 import { info, warn } from '@tauri-apps/plugin-log'
 import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 
-import { Stack } from '@fluentui/react/lib/Stack'
-import { TextField } from '@fluentui/react/lib/TextField'
 import { makeStyles, Text, Label, Input } from '@fluentui/react-components'
 import { useId } from '@fluentui/react-utilities'
 import { FolderTextField } from './FolderTextfield'
 
+const useStyles = makeStyles({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    flexWrap: 'nowrap',
+    width: '100%',
+    height: '100%',
+    gap: '8px',
+    margin: '16px',
+  },
+})
+
 
 export default function CMakeConfiguration(): React.JSX.Element {
-  const projectSourceId = useId();
+  const classes = useStyles()
+  const projectSourceId = useId()
   const [sourceDir, setSourceDir] = useState<string>('')
   const [buildDir, setBuildDir] = useState<string>('')
   const [search, setSearch] = useState<string>('')
@@ -36,56 +48,36 @@ export default function CMakeConfiguration(): React.JSX.Element {
     setLogMessages((prev) => prev + '\n' + message)
   })
 
-  const handleBrowseSource = (): void => {
-    console.log('Browse Source Directory')
-
-    // Trigger open dialog in app backend
-    selectFolder(sourceDir).then((folder) => {
-      if (folder) {
-        setSourceDir(folder)
-      }
-    })
-  }
-
   const handleChangeBuildDir = async (folder: string): Promise<void> => {
     setBuildDir(folder)
 
-    console.log(`Invoke load_cache with folder: ${folder}`)
+    console.log(`Try loading cache from build folder: ${folder}`)
     const cache = await loadCacheFolder(folder)
-    console.log(`Received cache:`, cache)
 
     if (cache) {
+      console.log(`Loaded cache:`, cache)
+
       const cacheObj = cache as CMakeCache
       if (cacheObj.generator) {
-        console.log('Generator:', cacheObj.generator)
+        console.log('Set Generator:', cacheObj.generator)
         setGenerator(cacheObj.generator)
       }
 
       if (cacheObj.source_dir) {
-        console.log('Source Directory:', cacheObj.source_dir)
+        console.log('Set Source Directory:', cacheObj.source_dir)
         setSourceDir(cacheObj.source_dir)
       }
 
       if (cacheObj.build_dir) {
-        console.log('Build Directory:', cacheObj.build_dir)
+        console.log('Set Build Directory:', cacheObj.build_dir)
         setBuildDir(cacheObj.build_dir)
       }
 
       setEntries(cacheObj.variables ? cacheObj.variables : {})
     } else {
+      console.log('No cache found')
       setEntries({})
     }
-  }
-
-  const handleBrowseBuild = async (): Promise<void> => {
-    console.log('Browse Build Directory')
-    // Trigger open dialog in app backend
-    const folder = await selectFolder(buildDir)
-    if (!folder) {
-      return
-    }
-
-    handleChangeBuildDir(folder)
   }
 
   const handleGenerate = async (): Promise<void> => {
@@ -137,40 +129,22 @@ export default function CMakeConfiguration(): React.JSX.Element {
   };
 
   return (
-    <Stack verticalFill grow>
+    <div className={classes.root}>
       <FolderTextField
         label="Project Source Code"
+        minLabelWidth='168px'
         value={sourceDir}
-        onChange={(_, data) => setSourceDir(data.value || '')}
+        onChange={setSourceDir}
         appearance='filled-darker'
       />
-      {/* <Stack horizontal verticalAlign='start' tokens={{ childrenGap: 16 }}>
-        <div>
-          <Label htmlFor={projectSourceId}>Project Source Code</Label>
-          <Input
-            id={projectSourceId}
-            // description="The root folder of your CMake project source code"
-            value={sourceDir}
-            onChange={(_, newValue) => setSourceDir(newValue.value || '')}
-            // underlined
-            // styles={{ root: { width: '100%' } }}
-            required />
-        </div>
-        <DefaultButton text="Browse Source" onClick={handleBrowseSource} styles={{ root: { width: '180px' } }} />
-      </Stack> */}
-
-      {/* <Stack horizontal verticalAlign='start' tokens={{ childrenGap: 16 }}>
-        <TextField
-          label="Project Build Directory"
-          description="The root folder of your CMake project build directory"
-          value={buildDir}
-          onChange={(_, newValue) => setBuildDir(newValue || '')}
-          underlined
-          styles={{ root: { width: '100%' } }}
-          required />
-        <DefaultButton text="Browse Build" onClick={handleBrowseBuild} styles={{ root: { width: '180px' } }} />
-      </Stack> */}
-    </Stack>
+      <FolderTextField
+        label="Project Build Directory"
+        minLabelWidth='168px'
+        value={buildDir}
+        onChange={handleChangeBuildDir}
+        appearance='filled-darker'
+      />
+    </div>
   )
 
   // return (

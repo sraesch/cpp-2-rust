@@ -1,37 +1,66 @@
-import { makeStyles, useId, Input, Label } from "@fluentui/react-components";
-import type { InputProps } from "@fluentui/react-components";
+import { makeStyles, useId, Input, Label, Button, type InputProps } from "@fluentui/react-components";
+import {
+    FolderOpenRegular,
+} from "@fluentui/react-icons";
+import { useCallback, useEffect, useState } from "react";
+import { selectFolder } from "../tauri_utils";
 
 const useStyles = makeStyles({
     root: {
-        // Stack the label above the field
         display: "flex",
         flexDirection: "row",
         alignItems: "end",
-        // Use 2px gap below the label (per the design system)
-        gap: "2px",
-        // Prevent the example from taking the full width of the page (optional)
-        maxWidth: "400px",
+        gap: "8px",
     },
     input: {
         flexGrow: 1,
-        width: "512px",
     },
 });
 
-export interface FolderTextFieldProps extends InputProps {
+/**
+ * Extend the default input props and override onChange event.
+ */
+export interface FolderTextFieldProps extends Omit<InputProps, 'onChange'> {
     label: string;
+    minLabelWidth?: string;
+    onChange?: (newValue: string) => void;
 }
 
 export const FolderTextField = (props: FolderTextFieldProps) => {
+    const [value, setValue] = useState<string>(props.value || '')
     const inputId = useId("input");
     const styles = useStyles();
 
+    // Sync local state with prop changes
+    useEffect(() => setValue(props.value || ''), [props.value]);
+
+    // Callback for changing the value and triggering the onChange prop
+    const changeValue = useCallback((newValue: string) => {
+        setValue(newValue);
+        if (props.onChange) {
+            props.onChange(newValue);
+        }
+    }, [props]);
+
+    // Callback for browsing the folder
+    const handleBrowseSource = useCallback((): void => {
+        console.log('Browse Source Directory')
+
+        // Trigger open dialog in app backend
+        selectFolder(value).then((folder) => {
+            if (folder) {
+                changeValue(folder)
+            }
+        })
+    }, [value, changeValue])
+
     return (
         <div className={styles.root}>
-            <Label weight="semibold" htmlFor={inputId} size={props.size} disabled={props.disabled}>
+            <Label style={{ minWidth: props.minLabelWidth }} weight="semibold" htmlFor={inputId} size={props.size} disabled={props.disabled}>
                 {props.label}
             </Label>
-            <Input className={styles.input} id={inputId} {...props} />
+            <Input className={styles.input} id={inputId} {...props} value={value} onChange={(e) => changeValue(e.target.value)} />
+            <Button icon={<FolderOpenRegular />} onClick={handleBrowseSource}>Browse</Button>
         </div>
     );
 };
