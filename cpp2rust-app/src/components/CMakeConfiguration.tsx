@@ -15,6 +15,7 @@ import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 import { makeStyles, Text, Label, Input } from '@fluentui/react-components'
 import { useId } from '@fluentui/react-utilities'
 import { FolderTextField } from './FolderTextfield'
+import CMakeCacheEntriesControl from './CMakeCacheEntriesControl'
 
 const useStyles = makeStyles({
   root: {
@@ -107,7 +108,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
     setEntries((prev) => ({
       ...prev,
       [name]: { ...prev[name], value: newValue },
-    }));
+    }))
   }
 
   const handleDeleteEntry = (name: string): void => {
@@ -119,14 +120,14 @@ export default function CMakeConfiguration(): React.JSX.Element {
   }
 
   const handleCloseAddVariableDialog = (variable?: CMakeVariable) => {
-    setShowAddEntryDialog(false);
+    setShowAddEntryDialog(false)
     if (variable) {
       setEntries((prev) => ({
         ...prev,
         [variable.name]: variable,
-      }));
+      }))
     }
-  };
+  }
 
   return (
     <div className={classes.root}>
@@ -143,6 +144,16 @@ export default function CMakeConfiguration(): React.JSX.Element {
         value={buildDir}
         onChange={handleChangeBuildDir}
         appearance='filled-darker'
+      />
+      <CMakeCacheEntriesControl
+        minLabelWidth='168px'
+        style={{ marginTop: '16px' }}
+        searchString={search}
+        grouped={grouped}
+        advanced={advanced}
+        onSearchChange={setSearch}
+        onGroupedChange={setGrouped}
+        onAdvancedChange={setAdvanced}
       />
     </div>
   )

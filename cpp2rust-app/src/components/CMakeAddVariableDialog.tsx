@@ -1,16 +1,37 @@
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import Select, { SelectChangeEvent } from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import Box from '@mui/material/Box'
-
-import { CMakeVariable, CMakeVariableType, isCMakeVariableNameValid, isCMakeVariableValid } from '../backend/cmake';
-import { useEffect, useMemo, useState } from 'react'
+import { CMakeVariable, CMakeVariableType, isCMakeVariableValid } from '../backend/cmake';
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CMakeValue } from './CMakeValue'
+import {
+    Dialog,
+    DialogSurface,
+    DialogTitle,
+    DialogBody,
+    DialogActions,
+    DialogContent,
+    Button,
+    makeStyles,
+    useId,
+    Label,
+    Input,
+    Select,
+} from "@fluentui/react-components"
+
+const useStyles = makeStyles({
+    content: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        justifyContent: 'start',
+        alignItems: 'stretch'
+    },
+    fieldWithLabel: {
+        // Stack the label above the field
+        display: "flex",
+        flexDirection: "column",
+        // Use 2px gap below the label (per the design system)
+        gap: "2px",
+    },
+})
 
 export interface CMakeAddVariableDialogProps {
     open?: boolean;
@@ -18,9 +39,13 @@ export interface CMakeAddVariableDialogProps {
 }
 
 export default function CMakeAddVariableDialog(props: CMakeAddVariableDialogProps): React.JSX.Element {
+    const classes = useStyles()
     const [name, setName] = useState<string>('')
     const [value, setValue] = useState<string>('OFF')
     const [type, setType] = useState<CMakeVariableType>(CMakeVariableType.BOOL)
+    const inputId = useId("name")
+    const selectId = useId("type")
+    const valueId = useId("value")
 
     // clear everything when the dialog is being opened
     useEffect(() => {
@@ -31,66 +56,71 @@ export default function CMakeAddVariableDialog(props: CMakeAddVariableDialogProp
         }
     }, [props.open])
 
+    // Memoized validation check
     const isValid = useMemo(() => {
         return isCMakeVariableValid({ name, varType: type, value, advanced: false })
-    }, [name, value])
+    }, [name, value, type])
 
-    const isVariableNameValid = useMemo(() => {
-        return isCMakeVariableNameValid(name);
-    }, [name])
-
-    const resetValue = (newType: CMakeVariableType) => {
+    // Callback to reset the value to bool with false
+    const resetValue = useCallback((newType: CMakeVariableType) => {
         if (newType === CMakeVariableType.BOOL) {
             setValue('OFF')
         } else {
             setValue('')
         }
-    }
+    }, [])
 
-    const handleChangeVariableType = (event: SelectChangeEvent<CMakeVariableType>) => {
-        setType(event.target.value)
-        resetValue(event.target.value)
-    }
+    // Callback for changing the variable type
+    const handleChangeVariableType = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+        setType(event.target.value as CMakeVariableType)
+        resetValue(event.target.value as CMakeVariableType)
+    }, [resetValue])
 
     return (
-        <Dialog open={props.open || false} onClose={() => props.onClose?.()} maxWidth="md">
-            <DialogTitle>Add CMake Variable</DialogTitle>
-            <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'start', alignItems: 'stretch' }}>
-                <TextField variant='standard'
-                    size='small'
-                    label="Variable Name"
-                    fullWidth
-                    value={name} onChange={(e) => setName(e.target.value)}
-                    sx={{
-                        minWidth: 360
-                    }}
-                    error={!isVariableNameValid}
-                    helperText={!isVariableNameValid ? 'Invalid variable name' : ''}
-                />
-
-                <Select
-                    size='small'
-                    variant='standard'
-                    labelId="variable-type-label"
-                    id="variable-type-select"
-                    value={type}
-                    label="Variable Type"
-                    onChange={handleChangeVariableType}
-                    sx={{ minWidth: 120 }}
-                >
-                    <MenuItem value={CMakeVariableType.BOOL}>Boolean</MenuItem>
-                    <MenuItem value={CMakeVariableType.STRING}>String</MenuItem>
-                    <MenuItem value={CMakeVariableType.FILEPATH}>File Path</MenuItem>
-                    <MenuItem value={CMakeVariableType.PATH}>Directory Path</MenuItem>
-                </Select>
-                <Box>
-                    <CMakeValue varType={type} value={value} onChange={setValue} />
-                </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={() => props.onClose?.()}>Cancel</Button>
-                <Button disabled={!isValid} onClick={() => props.onClose?.({ name, varType: type, value, advanced: false })}>Add Variable</Button>
-            </DialogActions>
+        <Dialog open={props.open || false} onOpenChange={() => props.onClose?.()}>
+            <DialogSurface>
+                <DialogBody>
+                    <DialogTitle>Add Variable</DialogTitle>
+                    <DialogContent className={classes.content}>
+                        <div className={classes.fieldWithLabel}>
+                            <Label htmlFor={inputId}>
+                                Variable Name
+                            </Label>
+                            <Input
+                                id={inputId}
+                                {...props}
+                                onChange={(e) => setName(e.target.value)}
+                                required />
+                        </div>
+                        <div>
+                            <Label htmlFor={selectId}>Variable Type</Label>
+                            <Select
+                                id={selectId}
+                                {...props}
+                                onChange={handleChangeVariableType}>
+                                <option value={CMakeVariableType.BOOL}>Boolean</option>
+                                <option value={CMakeVariableType.STRING}>String</option>
+                                <option value={CMakeVariableType.FILEPATH}>File Path</option>
+                                <option value={CMakeVariableType.PATH}>Directory Path</option>
+                            </Select>
+                        </div>
+                        <div className={classes.fieldWithLabel}>
+                            <Label htmlFor={valueId}>Variable Value</Label>
+                            <CMakeValue varType={type} value={value} onChange={setValue} />
+                        </div>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => props.onClose?.()}>Cancel</Button>
+                        <Button
+                            disabled={!isValid}
+                            appearance="primary"
+                            onClick={() => props.onClose?.({ name, varType: type, value, advanced: false })}
+                        >
+                            Add Variable
+                        </Button>
+                    </DialogActions>
+                </DialogBody>
+            </DialogSurface>
         </Dialog>
     );
 }
