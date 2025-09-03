@@ -1,12 +1,9 @@
-import Box from '@mui/material/Box'
 import CMakeConfiguration from './components/CMakeConfiguration'
 
 function App(): React.JSX.Element {
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
-
   return (
-    <Box
-      sx={{
+    <div
+      style={{
         width: '100%',
         height: '100vh',
         display: 'flex',
@@ -15,7 +12,7 @@ function App(): React.JSX.Element {
       }}
     >
       <CMakeConfiguration />
-    </Box>
+    </div>
   )
 }
 

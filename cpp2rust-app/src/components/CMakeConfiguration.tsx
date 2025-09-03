@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
+import { DefaultButton } from '@fluentui/react/lib/Button'
 import { useState } from 'react'
 import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
@@ -13,8 +12,15 @@ import CMakeAddVariableDialog from './CMakeAddVariableDialog'
 import { info, warn } from '@tauri-apps/plugin-log'
 import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 
+import { Stack } from '@fluentui/react/lib/Stack'
+import { TextField } from '@fluentui/react/lib/TextField'
+import { makeStyles, Text, Label, Input } from '@fluentui/react-components'
+import { useId } from '@fluentui/react-utilities'
+import { FolderTextField } from './FolderTextfield'
+
 
 export default function CMakeConfiguration(): React.JSX.Element {
+  const projectSourceId = useId();
   const [sourceDir, setSourceDir] = useState<string>('')
   const [buildDir, setBuildDir] = useState<string>('')
   const [search, setSearch] = useState<string>('')
@@ -131,92 +137,129 @@ export default function CMakeConfiguration(): React.JSX.Element {
   };
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        margin: '16px'
-      }}
-    >
-      <CMakeAddVariableDialog open={showAddEntryDialog} onClose={handleCloseAddVariableDialog} />
-      <Box
-        sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
-      >
-        <TextField
-          label="Project Source Code"
-          variant="standard"
-          value={sourceDir}
-          onChange={(e) => setSourceDir(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <Button
-          size="small"
-          sx={{ minWidth: '160px', height: '32px' }}
-          variant="contained"
-          onClick={handleBrowseSource}
-        >
-          Browse Source
-        </Button>
-      </Box>
-      <Box
-        sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
-      >
+    <Stack verticalFill grow>
+      <FolderTextField
+        label="Project Source Code"
+        value={sourceDir}
+        onChange={(_, data) => setSourceDir(data.value || '')}
+        appearance='filled-darker'
+      />
+      {/* <Stack horizontal verticalAlign='start' tokens={{ childrenGap: 16 }}>
+        <div>
+          <Label htmlFor={projectSourceId}>Project Source Code</Label>
+          <Input
+            id={projectSourceId}
+            // description="The root folder of your CMake project source code"
+            value={sourceDir}
+            onChange={(_, newValue) => setSourceDir(newValue.value || '')}
+            // underlined
+            // styles={{ root: { width: '100%' } }}
+            required />
+        </div>
+        <DefaultButton text="Browse Source" onClick={handleBrowseSource} styles={{ root: { width: '180px' } }} />
+      </Stack> */}
+
+      {/* <Stack horizontal verticalAlign='start' tokens={{ childrenGap: 16 }}>
         <TextField
           label="Project Build Directory"
-          variant="standard"
+          description="The root folder of your CMake project build directory"
           value={buildDir}
-          onChange={(e) => handleChangeBuildDir(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <Button
-          size="small"
-          sx={{ minWidth: '160px', height: '32px' }}
-          variant="contained"
-          onClick={handleBrowseBuild}
-        >
-          Browse Build
-        </Button>
-      </Box>
-      <Box
-        sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
-      >
-        <TextField
-          label="Search"
-          variant="standard"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Checkbox size="small" checked={grouped} onChange={(e) => setGrouped(e.target.checked)} />
-          <Typography>Grouped</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Checkbox
-            size="small"
-            checked={advanced}
-            onChange={(e) => setAdvanced(e.target.checked)}
-          />
-          <Typography>Advanced</Typography>
-        </Box>
-        <Button sx={{ minWidth: '100px', height: '32px' }} variant="outlined" size="small" onClick={() => setShowAddEntryDialog(true)}>
-          Add Entry
-        </Button>
-      </Box>
-      <CMakeTable entries={entries}
-        advanced={advanced}
-        search={search}
-        onChangeEntry={handleChangeEntry}
-        onDeleteEntry={handleDeleteEntry}
-      />
-      <CMakeControls onGenerate={handleGenerate} generator={generator} />
-      <CMakeLog logMessages={logMessages} />
-    </Box>
+          onChange={(_, newValue) => setBuildDir(newValue || '')}
+          underlined
+          styles={{ root: { width: '100%' } }}
+          required />
+        <DefaultButton text="Browse Build" onClick={handleBrowseBuild} styles={{ root: { width: '180px' } }} />
+      </Stack> */}
+    </Stack>
   )
+
+  // return (
+  //   <Box
+  //     sx={{
+  //       width: '100%',
+  //       height: '100%',
+  //       display: 'flex',
+  //       flexDirection: 'column',
+  //       gap: 2,
+  //       margin: '16px'
+  //     }}
+  //   >
+  //     <CMakeAddVariableDialog open={showAddEntryDialog} onClose={handleCloseAddVariableDialog} />
+  //     <Box
+  //       sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
+  //     >
+  //       <TextField
+  //         label="Project Source Code"
+  //         variant="standard"
+  //         value={sourceDir}
+  //         onChange={(e) => setSourceDir(e.target.value)}
+  //         fullWidth
+  //         size="small"
+  //       />
+  //       <Button
+  //         size="small"
+  //         sx={{ minWidth: '160px', height: '32px' }}
+  //         variant="contained"
+  //         onClick={handleBrowseSource}
+  //       >
+  //         Browse Source
+  //       </Button>
+  //     </Box>
+  //     <Box
+  //       sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
+  //     >
+  //       <TextField
+  //         label="Project Build Directory"
+  //         variant="standard"
+  //         value={buildDir}
+  //         onChange={(e) => handleChangeBuildDir(e.target.value)}
+  //         fullWidth
+  //         size="small"
+  //       />
+  //       <Button
+  //         size="small"
+  //         sx={{ minWidth: '160px', height: '32px' }}
+  //         variant="contained"
+  //         onClick={handleBrowseBuild}
+  //       >
+  //         Browse Build
+  //       </Button>
+  //     </Box>
+  //     <Box
+  //       sx={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}
+  //     >
+  //       <TextField
+  //         label="Search"
+  //         variant="standard"
+  //         value={search}
+  //         onChange={(e) => setSearch(e.target.value)}
+  //         fullWidth
+  //         size="small"
+  //       />
+  //       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+  //         <Checkbox size="small" checked={grouped} onChange={(e) => setGrouped(e.target.checked)} />
+  //         <Typography>Grouped</Typography>
+  //       </Box>
+  //       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+  //         <Checkbox
+  //           size="small"
+  //           checked={advanced}
+  //           onChange={(e) => setAdvanced(e.target.checked)}
+  //         />
+  //         <Typography>Advanced</Typography>
+  //       </Box>
+  //       <Button sx={{ minWidth: '100px', height: '32px' }} variant="outlined" size="small" onClick={() => setShowAddEntryDialog(true)}>
+  //         Add Entry
+  //       </Button>
+  //     </Box>
+  //     <CMakeTable entries={entries}
+  //       advanced={advanced}
+  //       search={search}
+  //       onChangeEntry={handleChangeEntry}
+  //       onDeleteEntry={handleDeleteEntry}
+  //     />
+  //     <CMakeControls onGenerate={handleGenerate} generator={generator} />
+  //     <CMakeLog logMessages={logMessages} />
+  //   </Box>
+  // )
 }
