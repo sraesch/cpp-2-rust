@@ -1,16 +1,8 @@
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import TableContainer from '@mui/material/TableContainer'
-import Paper from '@mui/material/Paper'
-import IconButton from '@mui/material/IconButton'
-import DeleteIcon from '@mui/icons-material/RemoveCircle'
-
 import { CMakeVariable } from '../backend/cmake'
 import { useMemo } from 'react'
 import { CMakeValue } from './CMakeValue'
+import { Button, Table, TableBody, TableCell, TableCellLayout, TableHeader, TableRow } from '@fluentui/react-components'
+import { DeleteRegular } from '@fluentui/react-icons'
 
 export interface CMakeTableProps {
   entries: Record<string, CMakeVariable>
@@ -39,40 +31,40 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
   }, [entries, advanced, search])
 
   return (
-    <TableContainer
-      component={Paper}
-      sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1, overflow: 'auto' }}
-    >
-      <Table stickyHeader sx={{ minWidth: 650 }} size="small" aria-label="cmake values table">
-        <TableHead>
-          <TableRow>
-            <TableCell align="left" />
-            <TableCell align="left">Name</TableCell>
-            <TableCell align="left">Value</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {Array.from(Object.entries(filteredEntries)).map(([name, variable]) => (
-            <TableRow key={name}>
-              <TableCell sx={{ maxWidth: '48px' }}>
-                <IconButton color='secondary' onClick={() => onDeleteEntry(name)}>
-                  <DeleteIcon />
-                </IconButton>
-              </TableCell>
-              <TableCell>{name}</TableCell>
-              <TableCell>
-                <CMakeValue
-                  varType={variable.varType}
-                  value={variable.value}
-                  onChange={(newValue) => {
-                    onChangeEntry(name, newValue)
-                  }}
+    <Table size='small' role="grid" style={{ minWidth: "600px" }} aria-label="cmake values table">
+      <TableHeader>
+        <TableRow>
+          <TableCell align="left">Name</TableCell>
+          <TableCell align="left">Value</TableCell>
+          <TableCell align="left" />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from(Object.entries(filteredEntries)).map(([name, variable]) => (
+          <TableRow key={name}>
+            <TableCell>{name}</TableCell>
+            <TableCell>
+              <CMakeValue
+                varType={variable.varType}
+                value={variable.value}
+                onChange={(newValue) => {
+                  onChangeEntry(name, newValue)
+                }}
+              />
+            </TableCell>
+            <TableCell role="gridcell">
+              <TableCellLayout>
+                <Button
+                  appearance="subtle"
+                  onClick={() => onDeleteEntry(name)}
+                  icon={<DeleteRegular />}
+                  aria-label="Delete"
                 />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+              </TableCellLayout>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   )
 }

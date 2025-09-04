@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { DefaultButton } from '@fluentui/react/lib/Button'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
 import CMakeTable from './CMakeTable'
@@ -42,14 +42,13 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [entries, setEntries] = useState<Record<string, CMakeVariable>>({})
   const [logMessages, setLogMessages] = useState<string>('')
   const [generator, setGenerator] = useState<string | undefined>(undefined)
-  const [showAddEntryDialog, setShowAddEntryDialog] = useState<boolean>(false)
 
   // Register listener for CMake log messages which are send on the channel 'cmake_logging'
   useCMakeLogMessages((message) => {
     setLogMessages((prev) => prev + '\n' + message)
   })
 
-  const handleChangeBuildDir = async (folder: string): Promise<void> => {
+  const handleChangeBuildDir = useCallback(async (folder: string): Promise<void> => {
     setBuildDir(folder)
 
     console.log(`Try loading cache from build folder: ${folder}`)
@@ -79,7 +78,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
       console.log('No cache found')
       setEntries({})
     }
-  }
+  }, [])
 
   const handleGenerate = async (): Promise<void> => {
     info('Generate CMake...')
@@ -119,16 +118,6 @@ export default function CMakeConfiguration(): React.JSX.Element {
     })
   }
 
-  const handleCloseAddVariableDialog = (variable?: CMakeVariable) => {
-    setShowAddEntryDialog(false)
-    if (variable) {
-      setEntries((prev) => ({
-        ...prev,
-        [variable.name]: variable,
-      }))
-    }
-  }
-
   return (
     <div className={classes.root}>
       <FolderTextField
@@ -154,6 +143,13 @@ export default function CMakeConfiguration(): React.JSX.Element {
         onSearchChange={setSearch}
         onGroupedChange={setGrouped}
         onAdvancedChange={setAdvanced}
+        onAddEntry={(variable) => setEntries((prev) => ({ ...prev, [variable.name]: variable }))}
+      />
+      <CMakeTable entries={entries}
+        advanced={advanced}
+        search={search}
+        onChangeEntry={handleChangeEntry}
+        onDeleteEntry={handleDeleteEntry}
       />
     </div>
   )
