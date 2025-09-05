@@ -1,11 +1,12 @@
 import { CMakeVariable } from '../backend/cmake'
 import { useMemo } from 'react'
 import { CMakeValue } from './CMakeValue'
-import { Button, Table, TableBody, TableCell, TableCellLayout, TableHeader, TableRow } from '@fluentui/react-components'
+import { Button, Table, TableBody, TableCell, TableCellLayout, TableHeader, TableRow, TableColumnDefinition, useTableFeatures, createTableColumn, useTableColumnSizing_unstable } from '@fluentui/react-components'
 import { DeleteRegular } from '@fluentui/react-icons'
+import { CacheEntries } from '../backend'
 
 export interface CMakeTableProps {
-  entries: Record<string, CMakeVariable>
+  entries: CacheEntries
   advanced?: boolean
   search?: string
   onChangeEntry: (name: string, newValue: string) => void
@@ -13,22 +14,23 @@ export interface CMakeTableProps {
 }
 
 export default function CMakeTable({ entries, advanced, search, onChangeEntry, onDeleteEntry }: CMakeTableProps): React.JSX.Element {
-  const filteredEntries = useMemo(() => {
+  const entriesArray: CMakeVariable[] = useMemo(() => Object.values(entries), [entries])
+
+  const filteredEntries: CMakeVariable[] = useMemo(() => {
     const filteredEntries = advanced
-      ? entries
-      : Object.fromEntries(Object.entries(entries).filter(([_, variable]) => !variable.advanced))
+      ? entriesArray
+      : entriesArray.filter((variable) => !variable.advanced)
 
     if (search) {
       const lowercasedSearch = search.toLowerCase()
-      return Object.fromEntries(
-        Object.entries(filteredEntries).filter(([name, variable]) =>
-          name.toLowerCase().includes(lowercasedSearch) || variable.value.toLowerCase().includes(lowercasedSearch)
-        )
+
+      return entriesArray.filter(variable =>
+        variable.name.toLowerCase().includes(lowercasedSearch) || variable.value.toLowerCase().includes(lowercasedSearch)
       )
     }
 
     return filteredEntries
-  }, [entries, advanced, search])
+  }, [entriesArray, advanced, search])
 
   return (
     <Table size='small' role="grid" style={{ minWidth: "600px" }} aria-label="cmake values table">
@@ -40,15 +42,15 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
         </TableRow>
       </TableHeader>
       <TableBody>
-        {Array.from(Object.entries(filteredEntries)).map(([name, variable]) => (
-          <TableRow key={name}>
-            <TableCell>{name}</TableCell>
+        {filteredEntries.map((variable) => (
+          <TableRow key={variable.name}>
+            <TableCell>{variable.name}</TableCell>
             <TableCell>
               <CMakeValue
                 varType={variable.varType}
                 value={variable.value}
                 onChange={(newValue) => {
-                  onChangeEntry(name, newValue)
+                  onChangeEntry(variable.name, newValue)
                 }}
               />
             </TableCell>
@@ -56,7 +58,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
               <TableCellLayout>
                 <Button
                   appearance="subtle"
-                  onClick={() => onDeleteEntry(name)}
+                  onClick={() => onDeleteEntry(variable.name)}
                   icon={<DeleteRegular />}
                   aria-label="Delete"
                 />
