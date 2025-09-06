@@ -24,9 +24,9 @@ const useStyles = makeStyles({
     justifyContent: 'flex-start',
     flexWrap: 'nowrap',
     width: '100%',
-    height: '100%',
-    gap: '8px',
-    margin: '16px',
+    height: 'calc(100vh - 16px)',
+    margin: '8px',
+    gap: '8px'
   },
 })
 
@@ -151,6 +151,8 @@ export default function CMakeConfiguration(): React.JSX.Element {
         onChangeEntry={handleChangeEntry}
         onDeleteEntry={handleDeleteEntry}
       />
+      <CMakeControls onGenerate={handleGenerate} generator={generator} />
+      <CMakeLog size='medium' appearance='outline' logMessages={logMessages} />
     </div>
   )
 

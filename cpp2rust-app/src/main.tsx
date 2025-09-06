@@ -12,7 +12,7 @@ import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <FluentProvider theme={webLightTheme}>
+    <FluentProvider theme={webLightTheme} style={{ width: '100vw', height: '100%', padding: 0, margin: 0 }}>
       <App />
     </FluentProvider>
   </StrictMode>,

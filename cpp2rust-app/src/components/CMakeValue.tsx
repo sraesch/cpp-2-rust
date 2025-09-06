@@ -1,4 +1,4 @@
-import { Button, ButtonProps, Checkbox, Input, useId } from "@fluentui/react-components"
+import { Button, ButtonProps, Checkbox, Input, InputProps, useId } from "@fluentui/react-components"
 import {
     OpenFolderRegular,
     OpenRegular
@@ -6,7 +6,7 @@ import {
 import { CMakeVariableType } from "../backend/cmake"
 import { selectFile, selectFolder } from "../tauri_utils"
 
-export interface CMakeValueProps {
+export interface CMakeValueProps extends Omit<Partial<InputProps>, 'onChange'> {
     varType: CMakeVariableType
     value: string
     onChange: (newValue: string) => void
@@ -74,6 +74,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
     if (varType === CMakeVariableType.PATH || varType === CMakeVariableType.FILEPATH) {
         return (
             <Input
+                {...props}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 contentAfter={

@@ -1,7 +1,7 @@
 import { CMakeVariable } from '../backend/cmake'
 import { useMemo, useState } from 'react'
 import { CMakeValue } from './CMakeValue'
-import { Button, Table, TableBody, TableCell, TableCellLayout, TableHeader, TableRow, TableColumnDefinition, useTableFeatures, createTableColumn, useTableColumnSizing_unstable, Menu, MenuTrigger, TableHeaderCell, MenuPopover, MenuList, MenuItem, TableColumnSizingOptions } from '@fluentui/react-components'
+import { Button, Table, TableBody, TableCell, TableCellLayout, TableHeader, TableRow, TableColumnDefinition, useTableFeatures, createTableColumn, useTableColumnSizing_unstable, Menu, MenuTrigger, TableHeaderCell, MenuPopover, MenuList, MenuItem, TableColumnSizingOptions, makeStyles } from '@fluentui/react-components'
 import { DeleteRegular } from '@fluentui/react-icons'
 import { CacheEntries } from '../backend'
 
@@ -44,7 +44,19 @@ const columnSizingOptions: TableColumnSizingOptions = {
   },
 }
 
+const useStyles = makeStyles({
+  root: {
+    flex: "1 1 0",
+    minHeight: "0",
+    overflowX: "auto",
+    overflowY: "auto",
+    border: "1px solid #e0e0e0",
+    borderRadius: "4px"
+  },
+})
+
 export default function CMakeTable({ entries, advanced, search, onChangeEntry, onDeleteEntry }: CMakeTableProps): React.JSX.Element {
+  const classes = useStyles()
   const entriesArray: CMakeVariable[] = useMemo(() => Object.values(entries), [entries])
   const [columns] = useState<TableColumnDefinition<CMakeVariable>[]>(columnsDef);
 
@@ -81,13 +93,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
   const rows = getRows()
 
   return (
-    <div style={{
-      height: "33vh",
-      overflowX: "auto",
-      overflowY: "auto",
-      border: "1px solid #e0e0e0",
-      borderRadius: "4px"
-    }}>
+    <div className={classes.root}>
       <Table ref={tableRef}
         {...columnSizing_unstable.getTableProps()}
         noNativeElements={true}
