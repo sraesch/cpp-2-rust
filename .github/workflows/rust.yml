@@ -13,6 +13,11 @@ jobs:
       - name: "Check out the repo"
         uses: actions/checkout@v3
 
+      - name: "Install system dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1 libxdo-dev libayatana-appindicator3-dev
+
       - uses: "actions-rs/toolchain@v1"
         with:
           profile: "minimal"
@@ -29,6 +34,11 @@ jobs:
     steps:
       - name: "Check out the repo"
         uses: actions/checkout@v3
+
+      - name: "Install system dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1 libxdo-dev libayatana-appindicator3-dev
 
       - uses: "actions-rs/toolchain@v1"
         with:
@@ -65,6 +75,11 @@ jobs:
     steps:
       - name: "Check out the repo"
         uses: actions/checkout@v3
+
+      - name: "Install system dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1 libxdo-dev libayatana-appindicator3-dev
 
       - uses: "actions-rs/toolchain@v1"
         with:
