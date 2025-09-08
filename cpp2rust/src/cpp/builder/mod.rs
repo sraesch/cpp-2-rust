@@ -88,7 +88,7 @@ impl Builder {
         info!("Building C++ project...");
         let root_path = self.options.root_directory.as_path();
 
-        let cmake_analysis = analyze_cmake_project(
+        let _cmake_analysis = analyze_cmake_project(
             root_path,
             &self.options.output_directory,
             &self.llm_client,
@@ -105,6 +105,7 @@ impl Builder {
     ///
     /// # Arguments
     /// * `cmake_files` - The list of cmake files to dump.
+    #[allow(dead_code)]
     fn dump_folder_structure_to_debug_log(cmake_files: &CMakeFiles) {
         for (id, cmake_file) in cmake_files.iter().enumerate() {
             debug!("CMake file (id={}): {}", id, cmake_file.display());
