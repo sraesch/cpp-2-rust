@@ -34,7 +34,19 @@ export interface CMakeCacheEntriesControlProps extends React.HTMLAttributes<HTML
     onAddEntry?: (entry: CMakeVariable) => void
 }
 
+/**
+ * Extracts the div props from the CMakeCacheEntriesControlProps
+ * @param props Props of type CMakeCacheEntriesControlProps
+ * @returns Div props for the container div
+ */
+function extractDivProps(props: CMakeCacheEntriesControlProps): React.HTMLAttributes<HTMLDivElement> {
+    const { minLabelWidth, searchString, grouped, advanced, onSearchChange, onGroupedChange, onAdvancedChange, onAddEntry, ...divProps } = props
+    return divProps
+}
+
 export default function CMakeCacheEntriesControl(props: CMakeCacheEntriesControlProps) {
+    const divProps = extractDivProps(props)
+
     const classes = useStyles()
     const inputId = useId("input")
     const [searchString, setSearchString] = useState('')
@@ -86,7 +98,7 @@ export default function CMakeCacheEntriesControl(props: CMakeCacheEntriesControl
     }, [props])
 
     return (
-        <div className={classes.root} {...props}>
+        <div className={classes.root} {...divProps}>
             <CMakeAddVariableDialog open={showAddVarDialog} onClose={handleCloseAddVarDialog} />
             <Label style={{ minWidth: props.minLabelWidth }} weight="semibold" htmlFor={inputId}>
                 Search Variable
