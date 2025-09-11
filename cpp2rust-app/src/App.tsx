@@ -1,21 +1,22 @@
-import Box from '@mui/material/Box'
+import { makeStyles } from '@fluentui/react-components'
 import CMakeConfiguration from './components/CMakeConfiguration'
 
-function App(): React.JSX.Element {
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+const useStyles = makeStyles({
+  root: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start'
+  }
+})
 
+function App(): React.JSX.Element {
+  const classes = useStyles()
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
+    <div className={classes.root}>
       <CMakeConfiguration />
-    </Box>
+    </div>
   )
 }
 

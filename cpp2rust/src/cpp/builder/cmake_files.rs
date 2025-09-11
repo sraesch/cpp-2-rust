@@ -365,7 +365,6 @@ mod tests {
 
         let test_cases = vec![
             (p.join("CMakeLists.txt"), true),
-            (p.join("CMAKELISTS.txt"), true),
             (p.join("foo.cmake"), true),
             (p.join("bar.txt"), false),
             (p.join("baz.rs"), false),

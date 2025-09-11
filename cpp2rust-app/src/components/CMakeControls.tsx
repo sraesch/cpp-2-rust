@@ -1,24 +1,36 @@
-import { Typography } from '@mui/material'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+import { Button, Text, makeStyles } from '@fluentui/react-components'
 
 export interface CMakeControlsProps {
   generator?: string
   onGenerate?: () => void
 }
 
+const useStyles = makeStyles({
+  root: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '8px'
+  },
+})
+
+
 export default function CMakeControls({
   generator,
   onGenerate
 }: CMakeControlsProps): React.JSX.Element {
+  const classes = useStyles()
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-      <Button size="small" variant="contained" color="primary" onClick={onGenerate}>
+    <div className={classes.root}>
+      <Button
+        onClick={onGenerate}
+        appearance="primary"
+      >
         Generate
       </Button>
-      <Typography variant="body2" color="text.secondary">
+      <Text>
         Generator: {generator || 'None'}
-      </Typography>
-    </Box>
+      </Text>
+    </div >
   )
 }
