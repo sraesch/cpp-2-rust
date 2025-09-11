@@ -88,7 +88,6 @@ export default function CMakeAddVariableDialog(props: CMakeAddVariableDialogProp
                             </Label>
                             <Input
                                 id={inputId}
-                                {...props}
                                 onChange={(e) => setName(e.target.value)}
                                 required />
                         </div>
@@ -96,7 +95,6 @@ export default function CMakeAddVariableDialog(props: CMakeAddVariableDialogProp
                             <Label htmlFor={selectId}>Variable Type</Label>
                             <Select
                                 id={selectId}
-                                {...props}
                                 onChange={handleChangeVariableType}>
                                 <option value={CMakeVariableType.BOOL}>Boolean</option>
                                 <option value={CMakeVariableType.STRING}>String</option>

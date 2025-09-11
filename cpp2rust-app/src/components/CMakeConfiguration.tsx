@@ -7,7 +7,6 @@ import { info, warn } from '@tauri-apps/plugin-log'
 import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 
 import { makeStyles } from '@fluentui/react-components'
-import { useId } from '@fluentui/react-utilities'
 import { FolderTextField } from './FolderTextfield'
 import CMakeCacheEntriesControl from './CMakeCacheEntriesControl'
 
@@ -27,7 +26,6 @@ const useStyles = makeStyles({
 
 export default function CMakeConfiguration(): React.JSX.Element {
   const classes = useStyles()
-  const projectSourceId = useId()
   const [sourceDir, setSourceDir] = useState<string>('')
   const [buildDir, setBuildDir] = useState<string>('')
   const [search, setSearch] = useState<string>('')

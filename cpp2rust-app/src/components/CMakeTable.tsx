@@ -68,7 +68,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
     if (search) {
       const lowercasedSearch = search.toLowerCase()
 
-      return entriesArray.filter(variable =>
+      return filteredEntries.filter(variable =>
         variable.name.toLowerCase().includes(lowercasedSearch) || variable.value.toLowerCase().includes(lowercasedSearch)
       )
     }
