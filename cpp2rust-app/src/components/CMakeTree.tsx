@@ -1,14 +1,11 @@
 import { CMakeVariable } from '../backend/cmake'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
-    TableColumnDefinition,
-    createTableColumn,
-    TableColumnSizingOptions,
     makeStyles,
     Tree,
 } from '@fluentui/react-components'
 import { CacheEntries } from '../backend'
-import { groupCMakeVariablesByPrefix, GroupedCMakeVariables } from '../grouping'
+import { filterGroupedCMakeVariables, groupCMakeVariablesByPrefix, GroupedCMakeVariables } from '../grouping'
 import CMakeSubTree from './CMakeSubTree'
 
 export interface CMakeTreeProps {
@@ -17,37 +14,6 @@ export interface CMakeTreeProps {
     search?: string
     onChangeEntry: (name: string, newValue: string) => void
     onDeleteEntry: (name: string) => void
-}
-
-const columnsDef: TableColumnDefinition<CMakeVariable>[] = [
-    createTableColumn<CMakeVariable>({
-        columnId: "name",
-        renderHeaderCell: () => <>Name</>,
-    }),
-    createTableColumn<CMakeVariable>({
-        columnId: "value",
-        renderHeaderCell: () => <>Value</>,
-    }),
-    createTableColumn<CMakeVariable>({
-        columnId: "actions",
-        renderHeaderCell: () => <></>,
-    }),
-]
-
-const columnSizingOptions: TableColumnSizingOptions = {
-    name: {
-        idealWidth: 300,
-        minWidth: 150,
-    },
-    value: {
-        minWidth: 110,
-        defaultWidth: 250,
-    },
-    actions: {
-        minWidth: 32,
-        idealWidth: 32,
-        defaultWidth: 32,
-    },
 }
 
 const useStyles = makeStyles({
@@ -65,9 +31,16 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
     const classes = useStyles()
     const entriesArray: CMakeVariable[] = useMemo(() => Object.values(entries), [entries])
 
+    // Group the variables by their prefix
     const groupedVariables = useMemo<GroupedCMakeVariables>(() => {
-        return groupCMakeVariablesByPrefix(entriesArray, advanced ?? false, search)
-    }, [entriesArray, advanced, search])
+        return groupCMakeVariablesByPrefix(entriesArray)
+    }, [entriesArray])
+
+    // Filter the grouped variables based on the advanced mode and search string
+    // (no filtering for now)
+    const filteredGroupedVariables = useMemo<GroupedCMakeVariables>(() => {
+        return filterGroupedCMakeVariables(groupedVariables, advanced ?? false, search)
+    }, [groupedVariables, advanced, search])
 
     return (
         <div className={classes.root}>
@@ -75,7 +48,7 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
                 size='small'
                 style={{ minWidth: "600px" }}>
                 {
-                    Object.entries(groupedVariables.groups).map(([groupName, groupEntries]) => (
+                    Object.entries(filteredGroupedVariables.groups).map(([groupName, groupEntries]) => (
                         <CMakeSubTree
                             key={groupName}
                             groupName={groupName}
