@@ -9,6 +9,7 @@ import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 import { makeStyles } from '@fluentui/react-components'
 import { FolderTextField } from './FolderTextfield'
 import CMakeCacheEntriesControl from './CMakeCacheEntriesControl'
+import CMakeVariables from './CMakeVariables'
 
 const useStyles = makeStyles({
   root: {
@@ -137,9 +138,11 @@ export default function CMakeConfiguration(): React.JSX.Element {
         onAdvancedChange={setAdvanced}
         onAddEntry={(variable) => setEntries((prev) => ({ ...prev, [variable.name]: variable }))}
       />
-      <CMakeTable entries={entries}
+      <CMakeVariables
+        entries={entries}
         advanced={advanced}
         search={search}
+        grouped={grouped}
         onChangeEntry={handleChangeEntry}
         onDeleteEntry={handleDeleteEntry}
       />

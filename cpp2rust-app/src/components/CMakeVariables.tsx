@@ -1,0 +1,20 @@
+import { CacheEntries } from "../backend"
+import CMakeTable from "./CMakeTable"
+import CMakeTree from "./CMakeTree"
+
+export interface CMakeVariablesProps {
+    entries: CacheEntries
+    advanced?: boolean
+    search?: string
+    grouped?: boolean
+    onChangeEntry: (name: string, newValue: string) => void
+    onDeleteEntry: (name: string) => void
+}
+
+export default function CMakeVariables({ entries, advanced, search, grouped, onChangeEntry, onDeleteEntry }: CMakeVariablesProps): React.JSX.Element {
+    if (grouped) {
+        return <CMakeTree entries={entries} advanced={advanced} search={search} onChangeEntry={onChangeEntry} onDeleteEntry={onDeleteEntry} />
+    } else {
+        return <CMakeTable entries={entries} advanced={advanced} search={search} onChangeEntry={onChangeEntry} onDeleteEntry={onDeleteEntry} />
+    }
+}
