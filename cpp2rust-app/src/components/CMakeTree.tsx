@@ -13,6 +13,7 @@ import {
     ResizeVideoRegular
 } from "@fluentui/react-icons"
 import { CMakeValue } from "./CMakeValue"
+import { filterGroupedCMakeVariables, groupCMakeVariablesByPrefix, GroupedCMakeVariables } from "../grouping"
 
 export interface CMakeTreeProps {
     entries: CacheEntries
@@ -25,6 +26,8 @@ export interface CMakeTreeProps {
 interface GroupedEntries {
     [groupName: string]: CMakeVariable[]
 }
+
+const UNGROUPED: string = "Ungrouped Entries"
 
 const useStyles = makeStyles({
     container: {
@@ -134,56 +137,22 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
     const containerRef = useRef<HTMLDivElement>(null)
     const resizerRef = useRef<HTMLDivElement>(null)
 
-    const filteredEntries = useMemo(() => {
-        const entriesArray: CMakeVariable[] = Object.values(entries)
+    // First: Group the entries by prefix.
+    const groupedEntries: GroupedCMakeVariables = useMemo(() => {
+        return groupCMakeVariablesByPrefix(Object.values(entries))
+    }, [entries])
 
-        let filtered = advanced
-            ? entriesArray
-            : entriesArray.filter((variable) => !variable.advanced)
-
-        if (search) {
-            const lowercasedSearch = search.toLowerCase()
-            filtered = filtered.filter(variable =>
-                variable.name.toLowerCase().includes(lowercasedSearch) ||
-                variable.value.toLowerCase().includes(lowercasedSearch)
-            )
+    // Second: Filter the entries based on advanced flag and search string.
+    // The result is a mapping from group name to list of entries in that group.
+    const filteredGroupedEntries: GroupedEntries = useMemo(() => {
+        const filtered: GroupedCMakeVariables = filterGroupedCMakeVariables(groupedEntries, advanced ?? false, search)
+        const result = filtered.groups
+        if (filtered.ungrouped.length > 0) {
+            result[UNGROUPED] = filtered.ungrouped
         }
 
-        return filtered
-    }, [entries, advanced, search])
-
-    const filteredGroupedEntries = useMemo(() => {
-        const groups: GroupedEntries = {}
-
-        // First pass: group by prefix
-        filteredEntries.forEach(entry => {
-            const underscoreIndex = entry.name.indexOf('_')
-            const prefix = underscoreIndex > 0 ? entry.name.substring(0, underscoreIndex) : entry.name
-
-            if (!groups[prefix]) {
-                groups[prefix] = []
-            }
-            groups[prefix].push(entry)
-        })
-
-        // Second pass: move single-item groups to "Ungrouped Entries"
-        const ungroupedEntries: CMakeVariable[] = []
-        const finalGroups: GroupedEntries = {}
-
-        Object.entries(groups).forEach(([groupName, groupEntries]) => {
-            if (groupEntries.length === 1) {
-                ungroupedEntries.push(...groupEntries)
-            } else {
-                finalGroups[groupName] = groupEntries
-            }
-        })
-
-        if (ungroupedEntries.length > 0) {
-            finalGroups["Ungrouped Entries"] = ungroupedEntries
-        }
-
-        return finalGroups
-    }, [filteredEntries])
+        return result
+    }, [groupedEntries, advanced, search])
 
     const toggleGroup = useCallback((groupName: string) => {
         setExpandedGroups(prev => {
@@ -269,9 +238,9 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
             <div className={classes.content}>
                 {Object.entries(filteredGroupedEntries)
                     .sort(([a], [b]) => {
-                        // Sort "Ungrouped Entries" last
-                        if (a === "Ungrouped Entries") return 1
-                        if (b === "Ungrouped Entries") return -1
+                        // Sort "Ungrouped Entries" first
+                        if (a === UNGROUPED) return -1
+                        if (b === UNGROUPED) return 1
                         return a.localeCompare(b)
                     })
                     .map(([groupName, groupEntries]) => {
