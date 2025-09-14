@@ -19,6 +19,7 @@ export interface CMakeTreeProps {
     entries: CacheEntries
     advanced?: boolean
     search?: string
+    disabled?: boolean
     onChangeEntry: (name: string, newValue: string) => void
     onDeleteEntry: (name: string) => void
 }
@@ -130,7 +131,7 @@ const useStyles = makeStyles({
     }
 })
 
-export default function CMakeTree({ entries, advanced, search, onChangeEntry, onDeleteEntry }: CMakeTreeProps): React.JSX.Element {
+export default function CMakeTree({ entries, advanced, search, onChangeEntry, onDeleteEntry, disabled }: CMakeTreeProps): React.JSX.Element {
     const classes = useStyles()
     const [keyColumnWidth, setKeyColumnWidth] = useState(300)
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -286,6 +287,7 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
                                                     <CMakeValue
                                                         varType={entry.varType}
                                                         value={entry.value}
+                                                        disabled={disabled}
                                                         onChange={(newValue) => onChangeEntry(entry.name, newValue)}
                                                     />
                                                 </div>
@@ -296,6 +298,7 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
                                                     size="small"
                                                     onClick={() => onDeleteEntry(entry.name)}
                                                     icon={<DeleteRegular />}
+                                                    disabled={disabled}
                                                     aria-label={`Delete ${entry.name}`}
                                                 />
                                             </div>

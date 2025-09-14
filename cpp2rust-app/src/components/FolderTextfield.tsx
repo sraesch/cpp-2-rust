@@ -59,8 +59,21 @@ export const FolderTextField = (props: FolderTextFieldProps) => {
             <Label style={{ minWidth: props.minLabelWidth }} weight="semibold" htmlFor={inputId} size={props.size} disabled={props.disabled}>
                 {props.label}
             </Label>
-            <Input className={styles.input} id={inputId} {...props} value={value} onChange={(e) => changeValue(e.target.value)} />
-            <Button icon={<OpenFolderRegular />} onClick={handleBrowseSource}>Browse</Button>
+            <Input
+                className={styles.input}
+                id={inputId}
+                {...props}
+                value={value}
+                onChange={(e) => changeValue(e.target.value)}
+                disabled={props.disabled}
+            />
+            <Button
+                icon={<OpenFolderRegular />}
+                onClick={handleBrowseSource}
+                disabled={props.disabled}
+            >
+                Browse
+            </Button>
         </div>
     )
 }

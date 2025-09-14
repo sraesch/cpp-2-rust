@@ -28,6 +28,7 @@ export interface CMakeCacheEntriesControlProps extends React.HTMLAttributes<HTML
     searchString?: string
     grouped?: boolean
     advanced?: boolean
+    disabled?: boolean
     onSearchChange?: (value: string) => void
     onGroupedChange?: (grouped: boolean) => void
     onAdvancedChange?: (advanced: boolean) => void
@@ -109,18 +110,27 @@ export default function CMakeCacheEntriesControl(props: CMakeCacheEntriesControl
                 appearance="outline"
                 contentBefore={<SearchRegular />}
                 value={searchString}
+                disabled={props.disabled}
                 onChange={handleSearchStringChange} />
             <Checkbox
                 checked={grouped}
                 onChange={handleGroupFlagChanged}
+                disabled={props.disabled}
                 label="Grouped"
             />
             <Checkbox
                 checked={advanced}
                 onChange={handleAdvancedFlagChanged}
+                disabled={props.disabled}
                 label="Advanced"
             />
-            <Button icon={<AddRegular />} onClick={() => setShowAddVarDialog(true)}>Add Variable</Button>
+            <Button
+                icon={<AddRegular />}
+                onClick={() => setShowAddVarDialog(true)}
+                disabled={props.disabled}
+            >
+                Add Variable
+            </Button>
         </div>
     )
 }

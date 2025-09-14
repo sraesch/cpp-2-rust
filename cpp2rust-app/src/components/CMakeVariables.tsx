@@ -7,14 +7,29 @@ export interface CMakeVariablesProps {
     advanced?: boolean
     search?: string
     grouped?: boolean
+    disabled?: boolean
     onChangeEntry: (name: string, newValue: string) => void
     onDeleteEntry: (name: string) => void
 }
 
-export default function CMakeVariables({ entries, advanced, search, grouped, onChangeEntry, onDeleteEntry }: CMakeVariablesProps): React.JSX.Element {
+export default function CMakeVariables({ entries, advanced, search, grouped, onChangeEntry, onDeleteEntry, disabled }: CMakeVariablesProps): React.JSX.Element {
     if (grouped) {
-        return <CMakeTree entries={entries} advanced={advanced} search={search} onChangeEntry={onChangeEntry} onDeleteEntry={onDeleteEntry} />
+        return <CMakeTree
+            entries={entries}
+            advanced={advanced}
+            search={search}
+            onChangeEntry={onChangeEntry}
+            onDeleteEntry={onDeleteEntry}
+            disabled={disabled}
+        />
     } else {
-        return <CMakeTable entries={entries} advanced={advanced} search={search} onChangeEntry={onChangeEntry} onDeleteEntry={onDeleteEntry} />
+        return <CMakeTable
+            entries={entries}
+            advanced={advanced}
+            search={search}
+            onChangeEntry={onChangeEntry}
+            onDeleteEntry={onDeleteEntry}
+            disabled={disabled}
+        />
     }
 }

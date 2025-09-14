@@ -35,6 +35,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [entries, setEntries] = useState<Record<string, CMakeVariable>>({})
   const [logMessages, setLogMessages] = useState<string>('')
   const [generator, setGenerator] = useState<string | undefined>(undefined)
+  const [isGenerating, setIsGenerating] = useState<boolean>(false)
 
   // Register listener for CMake log messages which are send on the channel 'cmake_logging'
   useCMakeLogMessages((message) => {
@@ -75,15 +76,23 @@ export default function CMakeConfiguration(): React.JSX.Element {
 
   const handleGenerate = async (): Promise<void> => {
     info('Generate CMake...')
+    if (isGenerating) {
+      warn('CMake generation is already running!')
+      return
+    }
+    setIsGenerating(true)
+
     if (!sourceDir) {
       warn('Source Directory is not set!')
       setLogMessages((prev) => prev + '\n' + 'Error: Source Directory is not set!')
+      setIsGenerating(false)
       return
     }
 
     if (!buildDir) {
       warn('Build Directory is not set!')
       setLogMessages((prev) => prev + '\n' + 'Error: Build Directory is not set!')
+      setIsGenerating(false)
       return
     }
 
@@ -94,6 +103,8 @@ export default function CMakeConfiguration(): React.JSX.Element {
     if (ret) {
       setEntries(ret.variables ? ret.variables : {})
     }
+
+    setIsGenerating(false)
   }
 
   const handleChangeEntry = (name: string, newValue: string): void => {
@@ -118,6 +129,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         minLabelWidth='168px'
         value={sourceDir}
         onChange={setSourceDir}
+        disabled={isGenerating}
         appearance='filled-darker'
       />
       <FolderTextField
@@ -125,6 +137,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         minLabelWidth='168px'
         value={buildDir}
         onChange={handleChangeBuildDir}
+        disabled={isGenerating}
         appearance='filled-darker'
       />
       <CMakeCacheEntriesControl
@@ -133,6 +146,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         searchString={search}
         grouped={grouped}
         advanced={advanced}
+        disabled={isGenerating}
         onSearchChange={setSearch}
         onGroupedChange={setGrouped}
         onAdvancedChange={setAdvanced}
@@ -143,10 +157,15 @@ export default function CMakeConfiguration(): React.JSX.Element {
         advanced={advanced}
         search={search}
         grouped={grouped}
+        disabled={isGenerating}
         onChangeEntry={handleChangeEntry}
         onDeleteEntry={handleDeleteEntry}
       />
-      <CMakeControls onGenerate={handleGenerate} generator={generator} />
+      <CMakeControls
+        onGenerate={handleGenerate}
+        generator={generator}
+        disabled={isGenerating}
+      />
       <CMakeLog size='medium' appearance='outline' logMessages={logMessages} />
     </div>
   )

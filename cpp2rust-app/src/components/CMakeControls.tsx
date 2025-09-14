@@ -3,6 +3,7 @@ import { Button, Text, makeStyles } from '@fluentui/react-components'
 export interface CMakeControlsProps {
   generator?: string
   onGenerate?: () => void
+  disabled?: boolean
 }
 
 const useStyles = makeStyles({
@@ -17,7 +18,8 @@ const useStyles = makeStyles({
 
 export default function CMakeControls({
   generator,
-  onGenerate
+  onGenerate,
+  disabled
 }: CMakeControlsProps): React.JSX.Element {
   const classes = useStyles()
   return (
@@ -25,6 +27,7 @@ export default function CMakeControls({
       <Button
         onClick={onGenerate}
         appearance="primary"
+        disabled={disabled}
       >
         Generate
       </Button>
