@@ -4,13 +4,13 @@ import { useMemo, useState, useCallback, useRef, useEffect } from "react"
 import {
     makeStyles,
     Button,
-    Text
+    Text,
+    Divider
 } from "@fluentui/react-components"
 import {
     ChevronRightRegular,
     ChevronDownRegular,
     DeleteRegular,
-    ResizeVideoRegular
 } from "@fluentui/react-icons"
 import { CMakeValue } from "./CMakeValue"
 import { filterGroupedCMakeVariables, groupCMakeVariablesByPrefix, GroupedCMakeVariables } from "../grouping"
@@ -32,7 +32,6 @@ const UNGROUPED: string = "Ungrouped Entries"
 const useStyles = makeStyles({
     container: {
         flex: "1 1 0",
-        minHeight: "0",
         overflowX: "auto",
         overflowY: "auto",
         border: "1px solid #e0e0e0",
@@ -56,6 +55,7 @@ const useStyles = makeStyles({
     },
     resizer: {
         position: 'absolute',
+        display: 'flex',
         right: '-3px',
         top: '0',
         bottom: '0',
@@ -100,6 +100,7 @@ const useStyles = makeStyles({
     entryRow: {
         display: 'flex',
         minHeight: '36px',
+        marginLeft: '32px',
         borderBottom: '1px solid var(--colorNeutralStroke3)',
         alignItems: 'center',
         '&:hover': {
@@ -220,7 +221,7 @@ export default function CMakeTree({ entries, advanced, search, onChangeEntry, on
                         className={`${classes.resizer} ${isResizing ? classes.resizerActive : ''}`}
                         onMouseDown={handleMouseDown}
                     >
-                        <ResizeVideoRegular style={{ fontSize: '12px', margin: 'auto' }} />
+                        <Divider aria-label="Resize Divider" vertical appearance="strong" />
                     </div>
                 </div>
                 <div
