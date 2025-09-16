@@ -66,6 +66,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
         return (
             <Input
                 id={inputId}
+                appearance="underline"
                 {...props}
                 onChange={(e) => onChange(e.target.value)}
                 required />
@@ -76,6 +77,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
         return (
             <Input
                 {...props}
+                appearance="underline"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 contentAfter={
