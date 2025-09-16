@@ -1,6 +1,6 @@
 import { CacheEntries } from "../backend"
 import CMakeTable from "./CMakeTable"
-import CMakeTree from "./CMakeTree"
+import CMakeTree from "./cmake_tree"
 
 export interface CMakeVariablesProps {
     entries: CacheEntries

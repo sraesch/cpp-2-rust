@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import CMakeTable from './CMakeTable'
 import CMakeControls from './CMakeControls'
 import CMakeLog from './CMakeLog'
 import { CMakeCache, CMakeVariable } from '../backend/cmake'
@@ -17,7 +16,7 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     flexWrap: 'nowrap',
-    width: '100%',
+    width: 'calc(100vw - 16px)',
     height: 'calc(100vh - 16px)',
     margin: '8px',
     gap: '8px'
@@ -123,7 +122,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
   }
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} aria-label='CMake Configuration Main Div'>
       <FolderTextField
         label="Project Source Code"
         minLabelWidth='168px'

@@ -14,7 +14,7 @@ const useStyles = makeStyles({
 function App(): React.JSX.Element {
   const classes = useStyles()
   return (
-    <div className={classes.root}>
+    <div className={classes.root} aria-label='App Root'>
       <CMakeConfiguration />
     </div>
   )
