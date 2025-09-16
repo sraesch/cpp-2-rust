@@ -26,21 +26,27 @@ mod tests {
 
     #[test]
     fn test_make_absolute() {
+        println!(
+            "Current directory: {}",
+            std::env::current_dir().unwrap().display()
+        );
+
+        #[cfg(windows)]
+        let absolute_path = Path::new(r"C:\absolute\path\to\file");
+        #[cfg(not(windows))]
         let absolute_path = Path::new("/absolute/path/to/file");
+        println!("Absolute path: {}", absolute_path.display());
         assert!(absolute_path.is_absolute());
         let absolute_path2 = make_absolute(absolute_path).unwrap();
         assert!(absolute_path2.is_absolute());
         assert_eq!(absolute_path, absolute_path2);
 
         let relative_path = Path::new("some/relative/path");
+        println!("Relative path: {}", relative_path.display());
         assert!(!relative_path.is_absolute());
 
         // manually set the current working directory
         let absolute_path = make_absolute(relative_path).unwrap();
         assert!(absolute_path.is_absolute());
-
-        println!("Relative path: {}", relative_path.display());
-        println!("Current directory: {}", std::env::current_dir().unwrap().display());
-        println!("Absolute path: {}", absolute_path.display());
     }
 }
