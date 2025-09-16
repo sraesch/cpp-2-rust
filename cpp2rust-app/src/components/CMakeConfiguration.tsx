@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import CMakeTable from './CMakeTable'
 import CMakeControls from './CMakeControls'
 import CMakeLog from './CMakeLog'
 import { CMakeCache, CMakeVariable } from '../backend/cmake'
@@ -9,6 +8,7 @@ import { generateCMake, loadCacheFolder, useCMakeLogMessages } from '../backend'
 import { makeStyles } from '@fluentui/react-components'
 import { FolderTextField } from './FolderTextfield'
 import CMakeCacheEntriesControl from './CMakeCacheEntriesControl'
+import CMakeVariables from './CMakeVariables'
 
 const useStyles = makeStyles({
   root: {
@@ -16,7 +16,7 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     flexWrap: 'nowrap',
-    width: '100%',
+    width: 'calc(100vw - 16px)',
     height: 'calc(100vh - 16px)',
     margin: '8px',
     gap: '8px'
@@ -34,6 +34,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
   const [entries, setEntries] = useState<Record<string, CMakeVariable>>({})
   const [logMessages, setLogMessages] = useState<string>('')
   const [generator, setGenerator] = useState<string | undefined>(undefined)
+  const [isGenerating, setIsGenerating] = useState<boolean>(false)
 
   // Register listener for CMake log messages which are send on the channel 'cmake_logging'
   useCMakeLogMessages((message) => {
@@ -74,15 +75,23 @@ export default function CMakeConfiguration(): React.JSX.Element {
 
   const handleGenerate = async (): Promise<void> => {
     info('Generate CMake...')
+    if (isGenerating) {
+      warn('CMake generation is already running!')
+      return
+    }
+    setIsGenerating(true)
+
     if (!sourceDir) {
       warn('Source Directory is not set!')
       setLogMessages((prev) => prev + '\n' + 'Error: Source Directory is not set!')
+      setIsGenerating(false)
       return
     }
 
     if (!buildDir) {
       warn('Build Directory is not set!')
       setLogMessages((prev) => prev + '\n' + 'Error: Build Directory is not set!')
+      setIsGenerating(false)
       return
     }
 
@@ -93,6 +102,8 @@ export default function CMakeConfiguration(): React.JSX.Element {
     if (ret) {
       setEntries(ret.variables ? ret.variables : {})
     }
+
+    setIsGenerating(false)
   }
 
   const handleChangeEntry = (name: string, newValue: string): void => {
@@ -111,12 +122,13 @@ export default function CMakeConfiguration(): React.JSX.Element {
   }
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} aria-label='CMake Configuration Main Div'>
       <FolderTextField
         label="Project Source Code"
         minLabelWidth='168px'
         value={sourceDir}
         onChange={setSourceDir}
+        disabled={isGenerating}
         appearance='filled-darker'
       />
       <FolderTextField
@@ -124,6 +136,7 @@ export default function CMakeConfiguration(): React.JSX.Element {
         minLabelWidth='168px'
         value={buildDir}
         onChange={handleChangeBuildDir}
+        disabled={isGenerating}
         appearance='filled-darker'
       />
       <CMakeCacheEntriesControl
@@ -132,18 +145,26 @@ export default function CMakeConfiguration(): React.JSX.Element {
         searchString={search}
         grouped={grouped}
         advanced={advanced}
+        disabled={isGenerating}
         onSearchChange={setSearch}
         onGroupedChange={setGrouped}
         onAdvancedChange={setAdvanced}
         onAddEntry={(variable) => setEntries((prev) => ({ ...prev, [variable.name]: variable }))}
       />
-      <CMakeTable entries={entries}
+      <CMakeVariables
+        entries={entries}
         advanced={advanced}
         search={search}
+        grouped={grouped}
+        disabled={isGenerating}
         onChangeEntry={handleChangeEntry}
         onDeleteEntry={handleDeleteEntry}
       />
-      <CMakeControls onGenerate={handleGenerate} generator={generator} />
+      <CMakeControls
+        onGenerate={handleGenerate}
+        generator={generator}
+        disabled={isGenerating}
+      />
       <CMakeLog size='medium' appearance='outline' logMessages={logMessages} />
     </div>
   )

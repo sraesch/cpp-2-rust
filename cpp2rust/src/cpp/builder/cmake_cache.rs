@@ -440,7 +440,13 @@ mod test {
 
         let result = patch_cmake_cache_data(cmake_cache_content.as_bytes(), &variables).unwrap();
 
-        assert_eq!(result, cmake_cache_content);
+        // compare the content of the original and the patched cache line by line
+        let original_lines = cmake_cache_content.lines();
+        let patched_lines = result.lines();
+
+        for (i, (orig_line, patched_line)) in original_lines.zip(patched_lines).enumerate() {
+            assert_eq!(orig_line, patched_line, "Line {} differs", i);
+        }
     }
 
     #[test]

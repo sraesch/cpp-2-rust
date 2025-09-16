@@ -9,6 +9,7 @@ export interface CMakeTableProps {
   entries: CacheEntries
   advanced?: boolean
   search?: string
+  disabled?: boolean
   onChangeEntry: (name: string, newValue: string) => void
   onDeleteEntry: (name: string) => void
 }
@@ -55,7 +56,7 @@ const useStyles = makeStyles({
   },
 })
 
-export default function CMakeTable({ entries, advanced, search, onChangeEntry, onDeleteEntry }: CMakeTableProps): React.JSX.Element {
+export default function CMakeTable({ entries, advanced, search, onChangeEntry, onDeleteEntry, disabled }: CMakeTableProps): React.JSX.Element {
   const classes = useStyles()
   const entriesArray: CMakeVariable[] = useMemo(() => Object.values(entries), [entries])
   const [columns] = useState<TableColumnDefinition<CMakeVariable>[]>(columnsDef);
@@ -100,7 +101,8 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
         size='small'
         role="grid"
         style={{ minWidth: "600px" }}
-        aria-label="cmake values table">
+        aria-label="cmake values table"
+      >
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
@@ -143,6 +145,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
                   <CMakeValue
                     varType={variable.item.varType}
                     value={variable.item.value}
+                    disabled={disabled}
                     onChange={(newValue) => {
                       onChangeEntry(variable.item.name, newValue)
                     }}
@@ -155,6 +158,7 @@ export default function CMakeTable({ entries, advanced, search, onChangeEntry, o
                     appearance="subtle"
                     onClick={() => onDeleteEntry(variable.item.name)}
                     icon={<DeleteRegular />}
+                    disabled={disabled}
                     aria-label="Delete"
                   />
                 </TableCellLayout>

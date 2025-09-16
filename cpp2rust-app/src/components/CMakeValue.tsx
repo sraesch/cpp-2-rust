@@ -56,6 +56,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
         return (
             <Checkbox
                 checked={value === "ON" || value === "1" || value.toLowerCase() === "true"}
+                disabled={props.disabled}
                 onChange={(event) => onChange(event.target.checked ? "ON" : "OFF")}
             />
         )
@@ -65,6 +66,7 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
         return (
             <Input
                 id={inputId}
+                appearance="underline"
                 {...props}
                 onChange={(e) => onChange(e.target.value)}
                 required />
@@ -75,10 +77,13 @@ export function CMakeValue(props: CMakeValueProps): React.JSX.Element {
         return (
             <Input
                 {...props}
+                appearance="underline"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 contentAfter={
-                    varType === CMakeVariableType.PATH ? <FolderButton onClick={handleOpenFolder} /> : <FileButton onClick={handleOpenFile} />
+                    varType === CMakeVariableType.PATH ?
+                        <FolderButton disabled={props.disabled} onClick={handleOpenFolder} /> :
+                        <FileButton disabled={props.disabled} onClick={handleOpenFile} />
                 }
             />
         )
